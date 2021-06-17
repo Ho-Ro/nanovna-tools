@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 '''
-Command line tool to capture a screen shot from nanoVNA
+Command line tool to capture a screen shot from NanoVNA
 connect via USB serial, issue the command 'capture'
 and fetch 320x240 rgb565 pixel.
 These pixels are converted to rgb888 values
@@ -18,7 +18,7 @@ from PIL import Image
 
 # define default values
 nanoPort = '/dev/ttyACM0'
-fileName = datetime.now().strftime("nanoVNA_%Y%m%d_%H%M%S.png")
+fileName = datetime.now().strftime("NanoVNA_%Y%m%d_%H%M%S.png")
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ outfile = options.out
 nanoPort = options.port
 
 
-# nanoVNA serial commands:
+# NanoVNA serial commands:
 # scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal
 # touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth
 # vbat_offset transform threshold help info version color
@@ -41,7 +41,7 @@ nanoPort = options.port
 width = 320
 height = 240
 
-# nanoVNA sends captured image in chunks of two lines, each RGB565 pixel has two bytes
+# NanoVNA sends captured image in chunks of two lines, each RGB565 pixel has two bytes
 chunk_size = 2
 pix_bytes = 2
 
@@ -50,20 +50,20 @@ rgb565 = b'' # empty bytearray for received pixel values
 crlf = b'\r\n'
 prompt = b'ch> '
 
-with serial.Serial( nanoPort, timeout=1 ) as nanoVNA: # open serial connection
-    nanoVNA.write( b'pause\r' )  # stop screen update
-    echo = nanoVNA.read_until( b'pause' + crlf + prompt ) # wait for completion
-    print( echo )
-    nanoVNA.write( b'capture\r' )  # request screen capture
-    echo = nanoVNA.read_until( b'capture' + crlf ) # wait for start of transfer
-    print( echo )
+with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
+    NanoVNA.write( b'pause\r' )  # stop screen update
+    echo = NanoVNA.read_until( b'pause' + crlf + prompt ) # wait for completion
+    # print( echo )
+    NanoVNA.write( b'capture\r' )  # request screen capture
+    echo = NanoVNA.read_until( b'capture' + crlf ) # wait for start of transfer
+    # print( echo )
     for chunk in range( int( height / chunk_size ) ): # fetch the picture
-        rgb565 += nanoVNA.read( chunk_size * width * pix_bytes ) # two rows of 320 pixel of 16 bit
-    echo = nanoVNA.read_until( prompt ) # wait for cmd completion
-    print( echo )
-    nanoVNA.write( b'resume\r' )  # resume the screen update
-    echo = nanoVNA.read_until( b'resume' + crlf + prompt ) # wait for completion
-    print( echo )
+        rgb565 += NanoVNA.read( chunk_size * width * pix_bytes ) # two rows of 320 pixel of 16 bit
+    echo = NanoVNA.read_until( prompt ) # wait for cmd completion
+    # print( echo )
+    NanoVNA.write( b'resume\r' )  # resume the screen update
+    echo = NanoVNA.read_until( b'resume' + crlf + prompt ) # wait for completion
+    # print( echo )
 
 # Prepare black RGB888 data array
 rgb888 = numpy.zeros( ( height, width, 3 ), dtype=numpy.uint8 )
