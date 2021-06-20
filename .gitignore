@@ -7,5 +7,6 @@
 *.kate-swp
 NanoVNA_20*_*.png
 NanoVNA_screenshot.png
+NanoVNA_screenshot.ppm
 capture_nanovna
 nanovna

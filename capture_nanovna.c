@@ -16,6 +16,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+// #define PPM
 
 const char *nano_port = "/dev/ttyACM0";
 
@@ -227,13 +228,16 @@ finalise:
 
 
 #ifdef PPM
-static int writePPM( const char *filename, int width, int height, const uint8_t *buffer ) {
+static int writePPM( const char *filename, int width, int height, const uint8_t *buffer, char *title ) {
     FILE *fp = fopen( filename, "wb" );
     if ( fp == NULL ) {
         fprintf( stderr, "Error opening %s: %s\n", filename, strerror( errno ) );
         return -1;
     }
-    fprintf( fp, "P6 %d %d 255\n", width, height );
+    fprintf( fp, "P6\n" );
+    if ( title )
+        fprintf( fp, "# %s\n", title );
+    fprintf( fp, "%d %d 255\n", width, height );
     fwrite( buffer, width * height, 3, fp );
     fclose( fp );
     return 0;
