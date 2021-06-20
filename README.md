@@ -20,17 +20,13 @@ The program takes less than 1 second to complete.
 An even faster command line tool that captures a screenshot from NanoVNA and stores it as small png.
 It works similar to the python above and is a proof of concept how to communicate over USB serial in c.
 
-## nanovna.c
+## nanovna.py
 
 A simple gateway to the NanoVNA shell commands for use in automatisation scripts, e.g.:
-````
- ./nanovna help
-help
-Commands: scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth vbat_offset transform threshold help info version color
-ch>
 
-./nanovna sweep
-sweep
-50000 900000000 101
-ch>
-````
+     ./nanovna.py help
+    Commands: scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth vbat_offset transform threshold help info version color
+
+## nanovna.c
+
+The same function, coded in C.
