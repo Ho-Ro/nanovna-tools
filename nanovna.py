@@ -21,7 +21,7 @@ nanoPort = '/dev/ttyACM0'
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'w' ),
+ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),
     help = 'write output to FILE, default = sys.stdout', metavar = 'FILE', default = sys.stdout )
 ap.add_argument( '-p', '--port', nargs = '?', default = nanoPort,
     help = 'connect to serial port PORT, default = ' + nanoPort )
@@ -47,10 +47,11 @@ prompt = b'ch> '
 with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
     NanoVNA.write( cmdline + cr )                     # send command and options terminated by CR
     echo = NanoVNA.read_until( cmdline + crlf )       # wait for command echo terminated by CR LF
-    echo = NanoVNA.read_until( crlf + prompt )        # get command response, CR, LF, prompt
-    response = echo[:-6].decode()                     # remove CR, LF, 'ch> '
+    echo = NanoVNA.read_until( prompt )               # get command response until prompt
 
-outfile.write( response )                             # write to stdout or outfile
+response = echo[:-4]                                  # remove 'ch> '
 
-#if outfile == sys.stdout:
-#print() # add newline
+if outfile == sys.stdout:
+    print( response.decode(), end='' )                # write string to stdout
+else:
+    outfile.write( response )                         # write bytes to outfile

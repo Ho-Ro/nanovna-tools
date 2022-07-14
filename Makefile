@@ -18,7 +18,7 @@ CFLAGS = -Wall -Wextra
 
 
 capture_nanovna: capture_nanovna.c
-	gcc -o $@ $(CFLAGS) -lpng $^
+	gcc -o $@ $(CFLAGS) $^ -lpng
 
 nanovna: nanovna.c
 	gcc -o $@ $(CFLAGS) $^

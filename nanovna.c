@@ -66,19 +66,26 @@ static int nano_set_interface_attribs( int speed ) {
 }
 
 
-// read from input  and echo the char until pattern was received
-static int nano_wait_for( const char *pattern ) {
-    int match = 0;
+// read from input and echo the char until pattern was received, do not echo the pattern
+static int nano_wait_for( const char *pattern, int echo ) {
+    int matched = 0;
     int len = strlen( pattern );
     uint8_t c;
-    while ( match < len ) {
-        if ( 1 != read( nano_fd, &c, 1 ) )
+    while ( matched < len ) {              // still no match
+        if ( 1 != read( nano_fd, &c, 1 ) ) // read error
             return -1;
-        putchar( c );
-        if ( c == pattern[ match ] )
-            ++match;
-        else
-            match = 0;
+        if ( c == pattern[ matched ] ) { // possible match, do not echo
+            ++matched;
+        } else { // nope
+            if ( echo ) {
+                if ( matched ) { // if there was a partial match then echo the suppressed chars
+                    for ( int iii = 0; iii < matched; ++iii )
+                        putchar( pattern[ iii ] );
+                }
+                putchar( c ); // echo all non matching char
+            }
+            matched = 0;
+        }
     }
     return 0;
 }
@@ -97,10 +104,10 @@ static int nano_send_string( const char *string ) {
 
 
 static void nano_send_command( const char *cmd ) {
-    nano_send_string( cmd );  // send the command
-    nano_send_string( "\r" ); // .. terminated with CR
-    nano_wait_for( cmd );     // wait for echo
-    nano_wait_for( "\r\n" );  // .. terminated by CR LF
+    nano_send_string( cmd );    // send the command
+    nano_send_string( "\r" );   // .. terminated with CR
+    nano_wait_for( cmd, 0 );    // wait for cmd but do not echo
+    nano_wait_for( "\r\n", 0 ); // .. terminated by CR LF (no echo)
 }
 
 
@@ -126,9 +133,7 @@ int main( int argc, char **argv ) {
     nano_set_interface_attribs( B115200 ); // baudrate 115200, 8 bits, no parity, 1 stop bit
 
     nano_send_command( cmdline ); // send the complete line
-    nano_wait_for( "ch> " );      // .. got it
-
-    putchar( '\n' );
+    nano_wait_for( "ch> ", 1 );   // .. got it
 
     nano_close();
 

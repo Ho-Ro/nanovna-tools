@@ -1,0 +1,104 @@
+Commands:
+
+- bandwidth {bw}
+  Show or set bandwidth, bw=0: 4000 Hz, 1: 2000 Hz, n: 4000 Hz / (bw+1)
+
+- cal [load|open|short|thru|isoln|done|reset|on|off|in]
+  Show calibration or calibrate
+
+- capture
+  Capture screenshot as 320 x 240 binary rgb565 (big-endian!)
+
+- clearconfig {protection key}
+  Clear all flash memory configuration (useful if FW update shows issues), protection key = 1234
+
+- color {id} {rgb24}
+  Show or set the different item colors
+
+- data [array]
+  Get complex data
+  0: S11, 1: S21,
+  2: CAL_LOAD, 3: CAL_OPEN, 4: CAL_SHORT, 5: CAL_THRU, 6: CAL_ISOLN
+  or 2: ETERM_ED, 3: ETERM_ES, 4: ETERM_ER, 5: ETERM_ET, 6: ETERM_EX
+
+- edelay {t(ps)}
+  Show or set edelay
+
+- freq {frequency(Hz)}
+  Stops sweeping and set port 0 output to Hz, max output is 299999999 Hz
+
+- frequencies
+  Show sample frequencies
+
+- help
+  Show available commands
+
+- info
+  Show HW/FW info
+
+- marker [n] [off|{index}]
+  Show value of active marker
+
+- pause
+  Pause measurement and screen update
+
+- power {0-3}|{255 - auto}
+  Show or set output power
+
+- recall {id}
+  Recall setting id = 0..4
+
+- reset
+  Reset NanoVNA
+
+- resume
+  Resume measurement and screen update
+
+- save {id}
+  Save setting id = 0..4
+
+- saveconfig
+  Save touchscreen calibration, vbat_offset calibration and threshold values
+
+- scan {start(Hz)} {stop(Hz)} [points] [outmask]
+  Pause sweep, do one scan from start to stop and return the output enabled by outmask
+  Outmask: 1: freq, 2: S11, 4: S21, 8: return uncalibrated values, 128: scan binary
+
+- scan_bin {start(Hz)} {stop(Hz)} [points] [outmask]
+  Same as above, but binary output format, freq, s11 and s21 are enabled by mask:
+  uint16_t mask; uint16_t points;
+  struct { uint32_t freq; float s11_re; float s11_im; float s21_re; float s21_im; } data[ points ]
+
+- smooth {s}
+  Show or set the data smooting
+
+- sweep {start(Hz)} [stop(Hz)] [points]
+- sweep {start|stop|center|span|cw} {freq(Hz)}
+  Set sweep parameter that also affect LCD (get results with command "data")
+
+- tcxo
+  Show or set the TCXO frequency (default = 26 MHz)
+
+- threshold {frequency(Hz)}
+  Show or set the frequency when to switch into harmonic mode
+
+- touchcal
+  Initialize the touch calibration
+
+- touchtest
+  Start a touch test
+
+- trace {0|1|2|3|all} [logmag|phase|smith|linear|delay|swr|off] [src]
+  Show the values of the current traces or changes values
+
+- transform {on|off|impulse|step|bandpass|minimum|normal|maximum} [...]
+  Switch into TDR mode
+
+- vbat
+  Show battery voltage
+
+- vbat_offset
+  Show or set the battery voltage offset (diode)
+
+- version
+  Show FW version

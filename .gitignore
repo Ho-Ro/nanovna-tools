@@ -5,8 +5,8 @@
 *.old
 *.orig
 *.kate-swp
+.directory
 NanoVNA_20*_*.png
-NanoVNA_screenshot.png
-NanoVNA_screenshot.ppm
+*.ppm
 capture_nanovna
 nanovna

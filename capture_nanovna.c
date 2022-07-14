@@ -14,9 +14,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
-// #define PPM
 
 const char *nano_port = "/dev/ttyACM0";
 
@@ -133,10 +133,21 @@ static int nano_get_buffer( uint8_t *buf, int size ) {
 }
 
 
-// in-buffer conversion from big-endian rgb565 to little-endian rgb888
+// clear last column of rgb565 because of random artifacts in some lines
+static void clear_last_nv_col( uint8_t *buffer ) {
+    int iii = 0;
+    do {
+        iii += 2 * nano_width;
+        buffer [ iii - 1 ] = 0;
+        buffer [ iii - 2 ] = 0;
+    } while ( iii < nano_width * nano_height * 2 );
+}
+
+
+// in-buffer conversion from native big-endian rgb565 to little-endian rgb888
 static void nv2rgb( uint8_t *buffer, int screensize ) {
-    uint8_t *nv = buffer + 2 * screensize;  // this points at 2/3 of the buffer
-    uint8_t *rgb = buffer + 3 * screensize; // this points after the end of buffer
+    uint8_t *nv = buffer + 2 * screensize;  // this points at 2/3 of the buffer (after end of nv)
+    uint8_t *rgb = buffer + 3 * screensize; // this points after the end of rgb888 buffer
     while ( screensize-- ) {                // iterate backwards
         // fetch two bytes of rgb565
         uint8_t lsb = *--nv;
@@ -227,36 +238,46 @@ finalise:
 }
 
 
-#ifdef PPM
+// this is the easiest straight-forward way to create an image from a pixel array
+// using the netpbm image format
 static int writePPM( const char *filename, int width, int height, const uint8_t *buffer, char *title ) {
     FILE *fp = fopen( filename, "wb" );
     if ( fp == NULL ) {
         fprintf( stderr, "Error opening %s: %s\n", filename, strerror( errno ) );
         return -1;
     }
-    fprintf( fp, "P6\n" );
-    if ( title )
-        fprintf( fp, "# %s\n", title );
-    fprintf( fp, "%d %d 255\n", width, height );
-    fwrite( buffer, width * height, 3, fp );
-    fclose( fp );
+    // print the header, simple format: "P6 <width> <height> <maxvalue>\n"
+    fprintf( fp, "P6\n" );                       // magic value "P6" -> binary portable pixmap "*.ppm"
+    if ( title )                                 // include the title into the header
+        fprintf( fp, "# %s\n", title );          // lines starting with '#' are treated as comment
+    fprintf( fp, "%d %d 255\n", width, height ); // maxvalue = 255 -> one byte per color component
+    fwrite( buffer, width * height, 3, fp );     // write 3 byte per pixel
+    fclose( fp );                                // ready
     return 0;
 }
-#endif
 
 
 int main( int argc, char **argv ) {
 
     uint8_t nano_buffer[ nano_width * nano_height * 3 ]; // enough place for 24bit rgb888 target format
 
-    char *target = "NanoVNA_screenshot.png";
+    char name[ 256 ];
+    char *target = name;
     char *title = "NanoVNA screenshot";
+
+    if ( nano_open() < 0 ) // connect to NanoVNA
+        return -1;
 
     if ( argc > 1 ) {
         target = argv[ 1 ];
+    } else {
+        time_t timer;
+        struct tm *tm_info;
+        timer = time( NULL );
+        tm_info = localtime( &timer );
+        strftime( target, 256, "NanoVNA_%Y%m%d_%H%M%S.png", tm_info );
+        puts( target );
     }
-
-    nano_open(); // connect to NanoVNA
 
     nano_set_interface_attribs( B115200 ); // baudrate 115200, 8 bits, no parity, 1 stop bit
 
@@ -265,7 +286,7 @@ int main( int argc, char **argv ) {
 
     nano_send_command( "capture" ); //
 
-    nano_get_buffer( nano_buffer, 240 * 320 * 2 ); // fetch the screen as 16 bit rgb565
+    nano_get_buffer( nano_buffer, nano_width * nano_height * 2 ); // fetch the screen as 16 bit rgb565
 
     nano_wait_for( "ch> " ); // wait for capture end
 
@@ -274,13 +295,13 @@ int main( int argc, char **argv ) {
 
     nano_close();
 
+    clear_last_nv_col( nano_buffer );
     nv2rgb( nano_buffer, nano_width * nano_height );
 
-    writePNG( target, nano_width, nano_height, nano_buffer, title );
-
-#ifdef PPM
-    writePPM( "NanoVNA_screenshot.ppm", nano_width, nano_height, nano_buffer, title );
-#endif
+    if ( strlen( target ) >= 4 && 0 == strcmp( target + strlen( target ) - 4, ".ppm" ) )
+        writePPM( target, nano_width, nano_height, nano_buffer, title );
+    else
+        writePNG( target, nano_width, nano_height, nano_buffer, title );
 
     return 0;
 }
