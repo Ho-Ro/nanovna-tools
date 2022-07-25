@@ -1,0 +1,4 @@
+Commands: scan scan_bin data frequencies freq sweep power bandwidth time sd_list sd_read sd_delete s
+aveconfig clearconfig dump touchcal touchtest pause resume cal save recall trace marker edelay s21of
+fset capture refresh touch release vbat tcxo reset smooth config usart_cfg usart vbat_offset transfo
+rm threshold help info version color

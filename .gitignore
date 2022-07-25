@@ -10,3 +10,5 @@ NanoVNA_20*_*.png
 *.ppm
 capture_nanovna
 nanovna
+*.s1p
+*.s2p

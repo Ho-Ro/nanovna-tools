@@ -49,7 +49,7 @@ with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
     echo = NanoVNA.read_until( cmdline + crlf )       # wait for command echo terminated by CR LF
     echo = NanoVNA.read_until( prompt )               # get command response until prompt
 
-response = echo[:-4]                                  # remove 'ch> '
+response = echo[ :-len( prompt ) ]                    # remove 'ch> '
 
 if outfile == sys.stdout:
     print( response.decode(), end='' )                # write string to stdout
