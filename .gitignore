@@ -12,3 +12,5 @@ capture_nanovna
 nanovna
 *.s1p
 *.s2p
+*.z1p
+scikit-rf

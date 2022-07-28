@@ -30,3 +30,24 @@ A simple gateway to the NanoVNA shell commands for use in automatisation scripts
 ## nanovna.c
 
 The same function, coded in C.
+
+## nanovna_snp.py
+
+Command line tool to fetch S11, S21 or S11 & S21 parameter from NanoVNA-H
+and save as S-parameter or Z-parameter in "touchstone" format (rev 1.1).
+Connect via USB serial, issue the command, calculate, and format the response.
+Do it as an exercise - step by step - without using tools like scikit-rf.
+
+```
+usage: nanovna_snp.py [-h] [-o [FILE]] [-p [PORT]] [--s1p | --s2p | --z1p]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o [FILE], --out [FILE]
+                        write output to FILE, default = <stdout>
+  -p [PORT], --port [PORT]
+                        connect to serial port PORT, default = /dev/ttyACM0
+  --s1p                 store S-parameter for 1-port device (default)
+  --s2p                 store S-parameter for 2-port device
+  --z1p                 store Z-parameter for 1-port device
+```

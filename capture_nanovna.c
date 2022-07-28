@@ -20,8 +20,8 @@
 
 const char *nano_port = "/dev/ttyACM0";
 
-const unsigned nano_width = 320;
-const unsigned nano_height = 240;
+const int nano_width = 320;
+const int nano_height = 240;
 
 static int nano_fd = 0;
 

@@ -4,8 +4,9 @@
 
 '''
 Command line tool to fetch S11, S21 or S11 & S21 parameter from NanoVNA-H
-and save as S-parameter or Z-parameter
-Connect via USB serial, issue the command and format the response as "touchstone"
+and save as S-parameter or Z-parameter in "touchstone" format (rev 1.1).
+Connect via USB serial, issue the command, calculate, and format the response.
+Do it as an exercise - step by step - without using tools like scikit-rf.
 '''
 
 import argparse
@@ -13,26 +14,32 @@ import serial
 import sys
 from datetime import datetime
 
-# define default serial port
+# default serial port
 nanoPort = '/dev/ttyACM0'
+
+# default output
+outfile = sys.stdout
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),
-    help = 'write output to FILE, default = sys.stdout', metavar = 'FILE', default = sys.stdout )
+    help = f'write output to FILE, default = {outfile.name}', metavar = 'FILE', default = outfile )
 ap.add_argument( '-p', '--port', nargs = '?', default = nanoPort,
-    help = 'connect to serial port PORT, default = ' + nanoPort )
-ap.add_argument( '--s2p', action = 'store_true',
-    help = 'fetch also s21 parameter in addition to s11' )
-ap.add_argument( '-z', '--format_z', action = 'store_true',
-    help = 'fetch s11 and calculate R +jX' )
+    help = f'connect to serial port PORT, default = {nanoPort}' )
+fmt = ap.add_mutually_exclusive_group()
+fmt.add_argument( '--s1p', action = 'store_true',
+    help = 'store S-parameter for 1-port device (default)' )
+fmt.add_argument( '--s2p', action = 'store_true',
+    help = 'store S-parameter for 2-port device' )
+fmt.add_argument( '--z1p', action = 'store_true',
+    help = 'store Z-parameter for 1-port device' )
 
 options = ap.parse_args()
 outfile = options.out
 nanoPort = options.port
-format_z = options.format_z
-
+s1p = options.s1p
 s2p = options.s2p
+z1p = options.z1p
 
 
 cr = '\r'
@@ -41,6 +48,7 @@ crlf = cr + lf
 prompt = 'ch> '
 
 Z0 = 50 # nominal impedance
+
 
 with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
 
@@ -52,60 +60,65 @@ with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
 
     execute( 'pause' ) # stop display
 
-    frequencies = execute( 'frequencies' ) # get frequencies
-    f_start = frequencies[ 0 ] # start frequency
-    f_stop = frequencies[ -1 ] # stop frequency
-    n = len( frequencies )     # number of frequencies
+    # get start and stop frequency as well as number of points
+    f_start, f_stop, n_points = execute( 'sweep' )[0].split()
 
-
-    if format_z or not s2p: # s1p is default
-        outmask = 3 # freq, S11.re, S11.im
-    else: # create s2p format
+    if s2p: # fetch S11 and S21
         outmask = 7 # freq, S11.re, S11.im, S21.re, S21.im
+    else: # fetch only S11
+        outmask = 3 # freq, S11.re, S11.im
 
-    cmd = f'scan {f_start} {f_stop} {n} {outmask}' # prepare command
+    cmd = f'scan {f_start} {f_stop} {n_points} {outmask}' # prepare command
 
-    comment = datetime.now().strftime('! NanoVNA %Y%m%d_%H%M%S\n! ' + cmd )
-    if format_z:
-        comment += '\n! 1 port Z-parameter (R/Z0 + jX/Z0)'
+    comment = datetime.now().strftime( f'! NanoVNA %Y%m%d_%H%M%S\n! {cmd}' )
+    if z1p:
+        comment += '\n! 1-port normalized Z-parameter (R/Z0 + jX/Z0)'
     elif s2p:
-        comment += '\n! 2 port S-parameter (S11.re S11.im S21.re S21.im 0 0 0 0)'
+        comment += '\n! 2-port S-parameter (S11.re S11.im S21.re S21.im 0 0 0 0)'
     else:
-        comment += '\n! 1 port S-parameter (S11.re S11.im)'
+        comment += '\n! 1-port S-parameter (S11.re S11.im)'
 
     scan_result = execute( cmd ) # scan and receive S-parameter
 
     execute( 'resume' ) # resume display
 
 
-def format_line( line ):
-    if format_z:
+def format_parameter_line( line ):
+    if z1p:
         # calculate normalized impedance as Rn + jXn = R/Z0 + jX/Z0 according to this doc
         # https://pa3a.nl/wp-content/uploads/2022/07/Math-for-nanoVNA-S2Z-and-Z2S-Jul-2021.pdf
-        freq, Sr, Si = line[:-1].split( ' ' )
+        freq, S11r, S11i = line.split()
         freq = float( freq )
-        Sr = float( Sr )
-        Si = float( Si )
-        Sr2 = Sr * Sr
-        Si2 = Si * Si
-        Sr_2 = ( 1 - Sr ) * ( 1 - Sr )
-        Rn = ( 1 - ( Si2 + Sr2 ) ) / ( Sr_2 + Si2 )
-        Xn = ( 2 * Si ) / ( Sr_2 + Si2 )
+        S11r = float( S11r )
+        S11i = float( S11i )
+        Sr2 = S11r * S11r
+        Si2 = S11i * S11i
+        Denom = ( 1 - S11r ) * ( 1 - S11r ) + Si2
+        Rn = ( 1 - Sr2 - Si2 ) / Denom
+        Xn = ( 2 * S11i ) / Denom
         return f'{freq:10.0f} {Rn:15.9f} {Xn:15.9f}'
     elif s2p:
         # format a line with freq, S11, S21, S12, S22 (Sxx as re/im pair)
-        freq, S11r, S11i, S21r, S21i = line[:-1].split( ' ' )
-        line = f'{float(freq):10.0f} {float(S11r):12.9f} {float(S11i):12.9f}'
-        line += f' {float(S21r):12.9f} {float(S21i):12.9f}'
+        freq, S11r, S11i, S21r, S21i = line.split()
+        freq = float( freq )
+        S11r = float( S11r )
+        S11i = float( S11i )
+        S21r = float( S21r )
+        S21i = float( S21i )
+        line = f'{freq:10.0f} {S11r:12.9f} {S11i:12.9f}'
+        line += f' {S21r:12.9f} {S21i:12.9f}'
         line += '  0  0  0  0' # S12 and S22 are 0+j0
         return line
-    else:
+    else: # s1p
         # format a line with freq, S11.re, S11.im
-        freq, S11r, S11i = line[:-1].split( ' ' )
-        return f'{float( freq ):10.0f} {float( S11r ):12.9f} {float( S11i ):12.9f}'
+        freq, S11r, S11i = line.split()
+        freq = float( freq )
+        S11r = float( S11r )
+        S11i = float( S11i )
+        return f'{freq:10.0f} {S11r:12.9f} {S11i:12.9f}'
 
 
-def write_line( line ):
+def output_string( line ):
     if outfile == sys.stdout:
         print( line )
     else:
@@ -122,15 +135,15 @@ frequency_unit = 'HZ'
 
 format = 'RI'
 
-if format_z:
+if z1p:
     parameter = 'Z'
 else:
     parameter = 'S'
 
-header = f'# {frequency_unit} {parameter} {format} R {Z0}'
+output_string( comment )
 
-write_line( header )
-write_line( comment )
+# option header
+output_string( f'# {frequency_unit} {parameter} {format} R {Z0}' )
 
 for line in scan_result:
-    write_line( format_line( line ) )
+    output_string( format_parameter_line( line ) )
