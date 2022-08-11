@@ -11,21 +11,34 @@ Do it as an exercise - step by step - without using tools like scikit-rf.
 
 import argparse
 import serial
+from serial.tools import list_ports
 import sys
 from datetime import datetime
 
-# default serial port
-nanoPort = '/dev/ttyACM0'
+
+# ChibiOS/RT Virtual COM Port
+VID = 0x0483 #1155
+PID = 0x5740 #22336
+
+# Get nanovna device automatically
+def getdevice() -> str:
+    device_list = list_ports.comports()
+    for device in device_list:
+        if device.vid == VID and device.pid == PID:
+            return device.device
+    raise OSError("device not found")
 
 # default output
 outfile = sys.stdout
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
+ap.add_argument( '-d', '--device', dest = 'device',
+    help = 'connect to device' )
 ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),
     help = f'write output to FILE, default = {outfile.name}', metavar = 'FILE', default = outfile )
-ap.add_argument( '-p', '--port', nargs = '?', default = nanoPort,
-    help = f'connect to serial port PORT, default = {nanoPort}' )
+# ap.add_argument( '-v', '--verbose', dest = 'verbose', default = False, action= 'store_true',
+#     help = 'be verbose' )
 fmt = ap.add_mutually_exclusive_group()
 fmt.add_argument( '--s1p', action = 'store_true',
     help = 'store S-parameter for 1-port device (default)' )
@@ -35,12 +48,14 @@ fmt.add_argument( '--z1p', action = 'store_true',
     help = 'store Z-parameter for 1-port device' )
 
 options = ap.parse_args()
+nanodevice = options.device or getdevice()
 outfile = options.out
-nanoPort = options.port
 s1p = options.s1p
 s2p = options.s2p
 z1p = options.z1p
 
+# if options.verbose:
+#     sys.stderr.write( f'NanoVNA: {nanodevice}\n' )
 
 cr = '\r'
 lf = '\n'
@@ -50,13 +65,13 @@ prompt = 'ch> '
 Z0 = 50 # nominal impedance
 
 
-with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
+with serial.Serial( nanodevice, timeout=1 ) as NanoVNA: # open serial connection
 
     def execute( cmd ):
-        NanoVNA.write( (cmd + cr).encode() )                # send command and options terminated by CR
-        echo = NanoVNA.read_until( (cmd + crlf).encode() )  # wait for command echo terminated by CR LF
-        echo = NanoVNA.read_until( prompt.encode() )        # get command response until prompt
-        return echo[ :-len( prompt ) ].decode().split( crlf )[:-1] # remove 'ch> ', split in lines
+        NanoVNA.write( (cmd + cr).encode() )                  # send command and options terminated by CR
+        echo = NanoVNA.read_until( (cmd + crlf).encode() )    # wait for command echo terminated by CR LF
+        echo = NanoVNA.read_until( prompt.encode() )          # get command response until prompt
+        return echo[ :-len( crlf + prompt ) ].decode().split( crlf ) # remove trailing '\r\nch> ', split in lines
 
     execute( 'pause' ) # stop display
 
