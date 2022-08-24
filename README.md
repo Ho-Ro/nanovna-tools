@@ -1,5 +1,6 @@
 # Toolbox for NanoVNA
-Small NanoVNA program(s) for scripting and automatisation
+Small NanoVNA program(s) for scripting and automatisation, developed on Debian stable (bullseye),
+but every other Linux/Unix system should work too. Windows and Mac are untested due to missing HW.
 
 ## capture_nanovna.py
 
@@ -19,12 +20,13 @@ The program takes less than 1 second to complete.
 
 An even faster command line tool that captures a screenshot from NanoVNA and stores it as small png.
 It works similar to the python above and is a proof of concept how to communicate over USB serial in c.
+PNG format is provided by `libpng` and `libpng-dev`, NetPBM format needs no extra library support.
 
 ## nanovna.py
 
 A simple gateway to the NanoVNA shell commands for use in automatisation scripts, e.g.:
 
-     ./nanovna.py help
+    ./nanovna.py help
     Commands: scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth vbat_offset transform threshold help info version color
 
 ## nanovna.c
