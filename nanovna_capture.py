@@ -13,29 +13,38 @@ that are stored as an image (e.g. png)
 import argparse
 from datetime import datetime
 import serial
+from serial.tools import list_ports
+
 import numpy
 from PIL import Image
 
+
+# ChibiOS/RT Virtual COM Port
+VID = 0x0483 #1155
+PID = 0x5740 #22336
+
+# Get nanovna device automatically
+def getdevice() -> str:
+    device_list = list_ports.comports()
+    for device in device_list:
+        if device.vid == VID and device.pid == PID:
+            return device.device
+    raise OSError("device not found")
+
 # define default values
-nanoPort = '/dev/ttyACM0'
 fileName = datetime.now().strftime("NanoVNA_%Y%m%d_%H%M%S.png")
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
+ap.add_argument( '-d', '--device', dest = 'device',
+    help = 'connect to device' )
 ap.add_argument( "-o", "--out", default = fileName,
     help="write the data into file OUT" )
-ap.add_argument( "-p", "--port", default = nanoPort,
-    help="connect to serial port PORT" )
 
 options = ap.parse_args()
 outfile = options.out
-nanoPort = options.port
+nanodevice = options.device or getdevice()
 
-
-# NanoVNA serial commands:
-# scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal
-# touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth
-# vbat_offset transform threshold help info version color
 
 # The size of the screen
 width = 320
@@ -50,7 +59,8 @@ rgb565 = b'' # empty bytearray for received pixel values
 crlf = b'\r\n'
 prompt = b'ch> '
 
-with serial.Serial( nanoPort, timeout=1 ) as NanoVNA: # open serial connection
+# do the communication
+with serial.Serial( nanodevice, timeout=1 ) as NanoVNA: # open serial connection
     NanoVNA.write( b'pause\r' )  # stop screen update
     echo = NanoVNA.read_until( b'pause' + crlf + prompt ) # wait for completion
     # print( echo )
@@ -85,6 +95,6 @@ for row in range( height ):
     # clear last column because of random artifacts in some lines
     rgb888[ row, width - 1 ] = [ 0, 0, 0 ]
 
-png = Image.fromarray( rgb888, 'RGB' ) # create a png image
-png.save( outfile ) # .. and save it to file
+image = Image.fromarray( rgb888, 'RGB' ) # create an image
+image.save( outfile ) # .. and save it to file (format according extension)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# SPDX-License-Identifier: GPL-2.0+
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 '''
 Command line tool to fetch S11, S21 or S11 & S21 parameter from NanoVNA-H
@@ -40,11 +40,11 @@ ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),
 # ap.add_argument( '-v', '--verbose', dest = 'verbose', default = False, action= 'store_true',
 #     help = 'be verbose' )
 fmt = ap.add_mutually_exclusive_group()
-fmt.add_argument( '--s1p', action = 'store_true',
+fmt.add_argument( '-1', '--s1p', action = 'store_true',
     help = 'store S-parameter for 1-port device (default)' )
-fmt.add_argument( '--s2p', action = 'store_true',
+fmt.add_argument( '-2', '--s2p', action = 'store_true',
     help = 'store S-parameter for 2-port device' )
-fmt.add_argument( '--z1p', action = 'store_true',
+fmt.add_argument( '-z', '--z1p', action = 'store_true',
     help = 'store Z-parameter for 1-port device' )
 
 options = ap.parse_args()
@@ -54,8 +54,6 @@ s1p = options.s1p
 s2p = options.s2p
 z1p = options.z1p
 
-# if options.verbose:
-#     sys.stderr.write( f'NanoVNA: {nanodevice}\n' )
 
 cr = '\r'
 lf = '\n'

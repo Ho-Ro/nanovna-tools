@@ -6,11 +6,45 @@
 *.orig
 *.kate-swp
 .directory
+
 NanoVNA_20*_*.png
 *.ppm
-capture_nanovna
-nanovna
+
+# binaries
+nanovna_capture
+nanovna_command
+
 *.s1p
 *.s2p
 *.z1p
+
 scikit-rf
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Distribution / packaging
+Changelog
+build/
+develop-eggs/
+dist/
+deb_dist/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+*.deb
+*.tar.gz
+*.tgz
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+

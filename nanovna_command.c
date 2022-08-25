@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // A simple gateway to the NanoVNA shell commands for use in automatisation scripts.
-// usage: nanovna <COMMAND> <ARG1> <ARG2> ...
+// usage: nanovna_command <COMMAND> <ARG1> <ARG2> ...
 
 #include <errno.h>
 #include <fcntl.h>

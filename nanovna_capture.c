@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 
 // Command line tool to capture a screen shot from NanoVNA
 // connect via USB serial, issue the command 'capture'
