@@ -1,9 +1,12 @@
 # Toolbox for NanoVNA
+
 Small NanoVNA program(s) for scripting and automatisation, developed on Debian stable (bullseye),
 but every other Linux/Unix system should work too. Windows and Mac are untested due to missing HW.
 To build a debian package just type `make deb`. You need to install python3-stdeb,
 the Python to Debian source package conversion plugins for distutils.
-
+Some python tools require also the modules `matplotlib` and `scikit-rf`,
+which should normally already be on your computer if you are involved
+in RF and microwave data processing and visualisation.
 
 ## nanovna_command.py
 
@@ -67,4 +70,37 @@ optional arguments:
   -1, --s1p             store S-parameter for 1-port device (default)
   -2, --s2p             store S-parameter for 2-port device
   -z, --z1p             store Z-parameter for 1-port device
+```
+
+# plot_snp.py
+
+Plot a `*.s[12]p` file in touchstone format. Render S11 as smith diagram and S21 (if available) as magnitude and phase into one figure.
+
+```
+usage: plot_snp.py [-h] [-x] infile
+
+positional arguments:
+  infile      infile in touchstone format
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -x, --xkcd  draw the plot in xkcd style :)
+```
+
+# check_s11.py
+
+Check S parameter files for values with |S11| > 1 that may indicate a calibration issue.
+
+```
+usage: check_s11.py [-h] [-i INFILE | -r] [-v]
+
+Check all touchstone files in current directory for values with |S11| > 1
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INFILE, --infile INFILE
+                        check only the touchstone file INFILE
+  -r, --recursive       check also all touchstone files in subdirectories
+  -v, --verbose         display all checked files, more mismatch details
+
 ```

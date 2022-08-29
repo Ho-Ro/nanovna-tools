@@ -26,6 +26,7 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=[],
-    scripts=[ 'nanovna_command.py', 'nanovna_capture.py', 'nanovna_snp.py'  ],
+    scripts=[ 'nanovna_command.py', 'nanovna_capture.py', 'nanovna_snp.py',
+              'check_s11.py', 'plot_snp.py' ],
     data_files=data_files,
 )
