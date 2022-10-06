@@ -72,7 +72,7 @@ optional arguments:
   -z, --z1p             store Z-parameter for 1-port device
 ```
 
-# plot_snp.py
+## plot_snp.py
 
 Plot a `*.s[12]p` file in touchstone format. Render S11 as smith diagram and S21 (if available) as magnitude and phase into one figure.
 
@@ -87,7 +87,7 @@ optional arguments:
   -x, --xkcd  draw the plot in xkcd style :)
 ```
 
-# check_s11.py
+## check_s11.py
 
 Check S parameter files for values with |S11| > 1 that may indicate a calibration issue.
 
@@ -103,4 +103,25 @@ optional arguments:
   -r, --recursive       check also all touchstone files in subdirectories
   -v, --verbose         display all checked files, more mismatch details
 
+```
+
+## nanovna_config.sh
+
+Tool to read or write the configuration and calibration data of NanoVNA[-H|-H4]
+This is stored on top of flash memory, address and size depend on device and FW variant
+(select your device in the top lines of script)
+
+The script saves one complete configuration block from the device.
+On restore the size of the config file is checked against the flash config size.
+Also the *MAGIC* value at file start will be checked, either `RNOC` for calibration
+or `UNOC` for configuration - this is 'CONR' or 'CONU' reverse :)
+This check helps a little bit to avoid the usage of wrong data.
+
+```
+usage:
+nanovna_config.sh SAVE [FILENAME]
+  if FILENAME is omitted an unique name is created, e.g.:
+  NanoVNA-H_5_slots_config_DATE_TIME.bin
+or:
+nanovna_config.sh RESTORE FILENAME
 ```

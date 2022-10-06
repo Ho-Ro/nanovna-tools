@@ -6,7 +6,7 @@ import setuptools
 # generic data files
 data_files=[
     ( 'share/doc/nanovna-tools/', [ 'Changelog', 'README.md', 'LICENSE' ] ),
-    ( 'bin/', [ 'nanovna_command', 'nanovna_capture' ] )
+    ( 'bin/', [ 'nanovna_command', 'nanovna_capture', 'nanovna_config.sh' ] )
 ]
 
 
