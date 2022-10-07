@@ -125,3 +125,39 @@ nanovna_config.sh SAVE [FILENAME]
 or:
 nanovna_config.sh RESTORE FILENAME
 ```
+
+## nanovna_config_split.py
+
+Tool to split the config data block of a NanoVNA-H retrieved with `nanovna_config.sh`
+and save them into individual files for each calibration slot and global config data.
+
+These slot files can be downloaded to the NanoVNA-H4 with the program "dfu-util"
+`dfu-util --device 0483:df11 --alt 0 --dfuse-address ADDR --download SLOTFILE`
+
+ADDR depends on the FW, either [DiSlord´s originalFW](https://github.com/DiSlord/NanoVNA-D)
+or [FW modified by Ho-Ro](https://github.com/Ho-Ro/NanoVNA-D/tree/NanoVNA-noSD)
+
+```
+DiSlord´s originalFW        FW modified by Ho-Ro
+====================        ====================
+SLOT    ADDR                SLOT    ADDR
+config  0x08018000          config  0x0801F800
+0       0x08018800          0       0x0801E000
+1       0x0801A000          1       0x0801C800
+2       0x0801B800          2       0x0801B000
+3       0x0801D000          3       0x08019800
+4       0x0801E800          4       0x08018000
+                            5       0x08016800
+                            6       0x08015000
+                            7       0x08013800
+```
+
+Reason:
+My FW modification omitted the SD functions, because my NanoVNA-H device has no SD card slot.
+The increased free flash memory can be used to store 8 calibration slots instead of 5.
+I also reverted the locations of the data and put config on top of flash and the slots
+below in descending order. This has the advantage that with increased program size in
+future versions the highest slot(s) can be removed and config is untouched, while in
+original FW the config date and the low slot(s) will be overwritten 1st.
+
+

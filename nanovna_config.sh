@@ -33,7 +33,24 @@ FLASH=0x08000000
 # exit at undefined variables
 set -u
 # debug output
-set -x
+# set -x
+
+# how are we called (i.e. shall we read or write)
+CMD_NAME="$(basename $0)"
+if [ "$#" -lt 1 ]; then # no command given
+    CMD="NONE"
+else
+    CMD="$1"
+fi
+
+# HACK for Ho-Ro 8 slot FW
+if [ "$CMD" = "SAVE8" ]; then
+    CMD=SAVE
+    VARIANT="H_HORO"
+elif [ "$CMD" = "RESTORE8" ]; then
+    CMD=RESTORE
+    VARIANT="H_HORO"
+fi
 
 # setup filename, flash address and config size
 if [ "$VARIANT" = "H4" ]; then
@@ -42,18 +59,21 @@ if [ "$VARIANT" = "H4" ]; then
     FLASH_SIZE=0x40000
     CONF_SIZE=0x800
     PROP_SIZE=0x4000
+    MAGIC=434f4e55
 elif [ "$VARIANT" = "H" ]; then
     PROP_MAX=5
     DEVICE="NanoVNA-H_${PROP_MAX}_slots"
     FLASH_SIZE=0x20000
     CONF_SIZE=0x800
     PROP_SIZE=0x1800
+    MAGIC=434f4e55
 elif [ "$VARIANT" = "H_HORO" ]; then
     PROP_MAX=8
     DEVICE="NanoVNA-H_${PROP_MAX}_slots"
     FLASH_SIZE=0x20000
     CONF_SIZE=0x800
     PROP_SIZE=0x1800
+    MAGIC=434f4e52
 else
     echo VARIANT must be one of "H4", "H", or "H_HORO"
     exit
@@ -65,15 +85,6 @@ CONFIG_START=$(( $FLASH + $FLASH_SIZE - $CONFIG_SIZE ))
 
 # format as hex for better human readability in debug etc.
 START=$( printf "0x%08X" $CONFIG_START )
-
-# how are we called (i.e. shall we read or write)
-CMD_NAME="$(basename $0)"
-if [ "$#" -lt 1 ]; then # no command given
-    CMD="NONE"
-else
-    CMD="$1"
-fi
-
 
 # prepare the cmd line, --device VID:PID, --alt (@Internal Flash)
 DFU_UTIL="dfu-util --device 0483:df11 --alt 0 --dfuse-address $START"
@@ -92,6 +103,13 @@ if [ "$CMD" = "SAVE" ]; then # read config block from device
     EXECUTE="$DFU_UTIL --upload $NAME"
     #echo $EXECUTE
     $EXECUTE
+    # is this the correct config content (start with magic "RNOC" or "UNOC")
+    # get hex string of 1st 4 bytes
+    XXXX=$(od -N4 -An -tx4 "$NAME" | tr A-F a-f | tr -d " ")
+    if [ $XXXX != $MAGIC ]; then
+        echo "\n$NAME: no correct config file"
+        exit
+    fi
 elif [ "$CMD" = "RESTORE" ]; then
     if [ "$#" -lt 2 ]; then # no filename given, exit
         echo "usage: $CMD_NAME RESTORE <CONFIG_FILE>"
@@ -109,12 +127,10 @@ elif [ "$CMD" = "RESTORE" ]; then
         exit
     fi
     # is this the correct config content (start with magic "RNOC" or "UNOC")
-    RNOC=434f4e52
-    UNOC=434f4e55
     # get hex string of 1st 4 bytes
-    MAGIC=$(od -N4 -An -tx4 "$2" | tr A-F a-f | tr -d " ")
-    if [ $MAGIC != $RNOC -a $MAGIC != $UNOC ]; then
-        echo "$CMD_NAME: no config file"
+    XXXX=$(od -N4 -An -tx4 "$2" | tr A-F a-f | tr -d " ")
+    if [ $XXXX != $MAGIC ]; then
+        echo "$CMD_NAME: no correct config file"
         exit
     fi
     # if the device is in UART mode then switch to DFU mode
