@@ -128,10 +128,25 @@ nanovna_config.sh RESTORE FILENAME
 
 ## nanovna_config_split.py
 
-Tool to split the config data block of a NanoVNA-H retrieved with `nanovna_config.sh`
-and save them into individual files for each calibration slot and global config data.
+Tool to process the config data block of a NanoVNA-H retrieved with `nanovna_config.sh`
+and save the data as individual files for each calibration slot and global config data
+or transfer the config file into the opposite format (5 slot format <-> 8 slot format).
 
-These slot files can be downloaded to the NanoVNA-H4 with the program "dfu-util"
+```
+usage: nanovna_config_split.py [-h] [-p PREFIX] [-s] [-t] infile
+
+positional arguments:
+  infile                config file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PREFIX, --prefix PREFIX
+                        prefix for output files, default: NV-H
+  -s, --split           split config file into individual slot files
+  -t, --transfer        transfer 5 slot format <-> 8 slot format
+```
+
+The individual slot files can be downloaded to the NanoVNA-H with the program "dfu-util"
 `dfu-util --device 0483:df11 --alt 0 --dfuse-address ADDR --download SLOTFILE`
 
 ADDR depends on the FW, either [DiSlord´s originalFW](https://github.com/DiSlord/NanoVNA-D)
@@ -159,5 +174,4 @@ I also reverted the locations of the data and put config on top of flash and the
 below in descending order. This has the advantage that with increased program size in
 future versions the highest slot(s) can be removed and config is untouched, while in
 original FW the config date and the low slot(s) will be overwritten 1st.
-
 

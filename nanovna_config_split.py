@@ -6,7 +6,7 @@
 Tool to split the config data block of a NanoVNA-H and save them
 into individual files for each calibration slot and global config data.
 
-These files can be downloaded to the NanoVNA-H4 with the program "dfu-util"
+These files can be downloaded to the NanoVNA-H with the program "dfu-util"
 "dfu-util --device 0483:df11 --alt 0 --dfuse-address ADDR --download SLOTFILE"
 
 ADDR depends on the FW:
@@ -62,64 +62,115 @@ import os
 ########################################################
 
 
-def decode_slot( config, typ, slot ):
+def decode_slt( config, typ, slot ):
 # decode a prop config slot (see properties_t in nanovna.h)
-# write slot data into file
-    cfg = config.read( 28 )
-    f1, f2, points = struct.unpack( '<4xII14xH', cfg )
-    cfg += config.read( 0x1800 - len( cfg ) )
+# write slot data into file (if option -s), return the slot data
+    slt = b''
+    slt += config.read( 28 ) # get the slot properties
+    f1, f2, points = struct.unpack( '<4xII14xH', slt )
+    slt += config.read( slot_len - len( slt ) ) # read remaining slot data
     name = f'{typ}_{slot}_{f1}_{f2}_{points}.bin'
-    print( f'{name} - slot {slot}: {f1} Hz ... {f2} Hz, {points} points' )
-    with open( name, 'wb' ) as f:
-        f.write( cfg )
+    print( f'slot {slot}: {f1} Hz ... {f2} Hz, {points} points', end='' )
+    if do_split:
+        print( f' -> {name}' )
+        with open( name, 'wb' ) as f:
+            f.write( slt )
+    else:
+        print()
+    return slt
 
 
 def decode_cfg( config, typ ):
     # decode the config storage (see config_t in nanovna.h)
-    # write config data into file
-    cfg = config.read( 100 )
+    # write config data into file (if option -s), return the config data
+    cfg = b''
+    # cfg += config.read( 100 ) # decode some config values
     # harmonic_f, if_f, vbat_offset, bandwidth, ser_speed, xtal_f  = struct.unpack( '<4xII12xHH64xII', cfg )
     # print( 'C', harmonic_f, if_f, vbat_offset, bandwidth, ser_speed, xtal_f )
-    cfg += config.read( 0x0800 - len( cfg ) )
+    cfg += config.read( cfg_len - len( cfg ) ) # read remaining cfg data
     name = f'{typ}_config.bin'
-    print( f'{name} - device configuration' )
-    with open( name, 'wb' ) as f:
-        f.write( cfg )
+    print( 'device configuration', end='' )
+    if do_split:
+        print( f' -> {name}' )
+        with open( name, 'wb' ) as f:
+            f.write( cfg )
+    else:
+        print()
+    return cfg
 
-
-fileName='NanoVNA-H_config.bin'
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument( '-c', '--config', default = fileName,
-    help="read the config data from file CONFIG" )
+ap.add_argument( 'infile', type=argparse.FileType( 'rb' ),
+    help='config file' )
 ap.add_argument( '-p', '--prefix', default = 'NV-H',
     help='prefix for output files, default: NV-H' )
+ap.add_argument( '-s', '--split', action='store_true',
+    help='split config file into individual slot files' )
+ap.add_argument( '-t', '--transfer', action='store_true',
+    help='transfer 5 slot format <-> 8 slot format' )
 
 options = ap.parse_args()
-CONFIG = options.config
-prefix = options.prefix
+infile = options.infile # read data from this file
+prefix = options.prefix # name prefix for individual slot files
+do_split = options.split # split into individual slot files
+do_transfer = options.transfer # 5 slot <-> 8 slot
 
-size = os.path.getsize( CONFIG )
+sector_len = 0x800 # 2048 bytes
+slot_len = 3 * sector_len # = 0x1800
+empty = bytearray( slot_len ) # dummy slot
+cfg_len = sector_len # = 0x0800
 
-with open( CONFIG, 'rb') as config:
-    if ( size == 0x8000 ):
-        slot = 0
-        delta = 1
-    elif( size == 0xC800 ):
-        slot = 7
-        delta = -1
+slots = [ [], [], [], [], [], [], [], [] ] # 8 calibration slots
+cfg = [] # the config slot
+
+size = os.path.getsize( infile.name )
+
+if ( size == 0x8000 ): # orig 5 slot format
+    index = 0 # start with slot 0
+    delta = 1 # bottom-up storage
+elif( size == 0xC800 ): # Ho-Ro 8 slot format
+    index = 7 # start with last slot
+    delta = -1 # top-down storage
+else:
+    print( f'wrong config file size, must be either {0x8000} (5 slots) or {0xC800} (8 slots)' )
+    sys.exit()
+
+while( infile.tell() < size ): # parse and decode the infile
+    s = infile.read( 4 )
+    infile.seek( -4, 1 )
+    magic, = struct.unpack( '<I', s )
+    if magic == 0x434f4e52: # 'CONR'
+        slots[ index ] = decode_slt( infile, prefix, index )
+        index += delta
+    elif magic == 0x434f4e55: # 'CONU'
+        cfg = decode_cfg( infile, prefix )
     else:
-        print( f'wrong config file size, must be either {0x8000} (5 slots) or {0xC800} (8 slots)' )
-        sys.exit()
+        infile.seek( sector_len, 1 ) # skip this sector
+infile.close()
 
-    while( config.tell() < size ):
-        s = config.read( 4 )
-        config.seek( -4, 1 )
-        magic, = struct.unpack( '<I', s )
-        if magic == 0x434f4e52: # 'CONR'
-            decode_slot( config, prefix, slot )
-            slot += delta
-        elif magic == 0x434f4e55: # 'CONU'
-            decode_cfg( config, prefix )
+if do_transfer: # transfer 5 slot format <-> 8 slot format
+    root, ext = os.path.splitext( infile.name )
+    if size == 0x8000: # 5 -> 8
+        name = f'{root}_5_to_8{ext}'
+        print( f'create 8 slot config -> {name}' )
+        with open( name, 'wb' ) as f:
+            for iii in range( 3 ): # 3 empty slots
+                f.write( empty )
+            for iii in range( 4, -1, -1 ): # 0..4 top down
+                if len( slots[ iii ] ) == slot_len:
+                    f.write( slots[ iii ] )
+                else:
+                    f.write( empty )
+            f.write( cfg ) # and finally the config area
+    elif size == 0xC800: # 8 -> 5
+        name = f'{root}_8_to_5{ext}'
+        print( f'create 5 slot config -> {name}' )
+        with open( name, 'wb' ) as f:
+            f.write( cfg ) # config area comes 1st
+            for iii in range( 5 ): # followed by slot 0..4
+                if len( slots[ iii ] ) == slot_len:
+                    f.write( slots[ iii ] )
+                else:
+                    f.write( empty )
 
