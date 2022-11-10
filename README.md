@@ -1,6 +1,6 @@
-# Toolbox for NanoVNA
+# Toolbox for NanoVNA and tinySA
 
-Small NanoVNA program(s) for scripting and automatisation, developed on Debian stable (bullseye),
+Small ***NanoVNA*** and ***tinySA*** program(s) for scripting and automatisation, developed on Debian stable (bullseye),
 but every other Linux/Unix system should work too. Windows and Mac are untested due to missing HW.
 To build a debian package just type `make deb`. You need to install python3-stdeb,
 the Python to Debian source package conversion plugins for distutils.
@@ -10,7 +10,7 @@ in RF and microwave data processing and visualisation.
 
 ## nanovna_command.py
 
-A simple gateway to the NanoVNA shell commands for use in automatisation scripts, e.g.:
+A simple gateway to the *NanoVNA* or *tinySA* shell commands for use in automatisation scripts, e.g.:
 
     ./nanovna_command.py help
     Commands: scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth vbat_offset transform threshold help info version color
@@ -21,7 +21,7 @@ The same function, coded in C.
 
 ## nanovna_capture.py
 
-Fast command line tool that captures a screenshot from NanoVNA and stores it as small png:
+Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png:
 - Connect via USB serial
 - Issue the command 'pause' to freeze the screen
 - Issue the command 'capture'
@@ -46,14 +46,14 @@ optional arguments:
 
 ## nanovna_capture.c
 
-An even faster command line tool that captures a screenshot from NanoVNA and stores it as small png.
+An even faster command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png.
 It works similar to the python above and is a proof of concept how to communicate over USB serial in c.
 Usage: "nanovna_capture NAME.EXT" -> Stores screenshot as PNG unless EXT == "ppm"
 PNG format is provided by `libpng` and `libpng-dev`, NetPBM format needs no extra library support.
 
 ## nanovna_snp.py
 
-Command line tool to fetch S11, S21 or S11 & S21 parameter from NanoVNA-H.
+Command line tool to fetch S11, S21 or S11 & S21 parameter from *NanoVNA-H*.
 Save as S-parameter (1 port or 2 port) or Z-parameter (1 port) in "touchstone" format (rev 1.1).
 Connect via USB serial, issue the command, calculate, and format the response.
 Do it as an exercise - step by step - without using tools like scikit-rf.
@@ -103,6 +103,26 @@ optional arguments:
   -r, --recursive       check also all touchstone files in subdirectories
   -v, --verbose         display all checked files, more mismatch details
 
+```
+
+## tinySA_remote.py
+
+Remote control for the *tinySA* - mirror the screen to your PC and operate the device with the mouse.
+The keys `+` and `-` zoom in and out, `s` takes a screenshot with timestamp, `ESC` quits the program.
+
+Work in progress - the mouse click is not fully working, currently no NanoVNA support.
+
+```
+usage: tinySA_remote.py [-h] [-d DEVICE] [-t | -n] [-z {2,3,4}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DEVICE, --device DEVICE
+                        connect to serial usb device
+  -t, --tinySA          use with tinySA (default)
+  -n, --NanoVNA         use with NanoVNA (not yet implemented)
+  -z {2,3,4}, --zoom {2,3,4}
+                        zoom the screen image
 ```
 
 ## nanovna_config.sh

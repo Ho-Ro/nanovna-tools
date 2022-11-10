@@ -8,6 +8,7 @@
 .directory
 
 NanoVNA_20*_*.png
+tinySA_20*_*.png
 *.ppm
 
 # binaries

@@ -16,8 +16,8 @@ setuptools.setup(
     author='Ho-Ro',
     author_email='horo@localhost',
     url='https://github.com/Ho-Ro/nanovna-tools',
-    description='Toolbox for NanoVNA',
-    long_description='Small NanoVNA program(s) for scripting and automatisation.',
+    description='Toolbox for NanoVNA and tinySA',
+    long_description='Small NanoVNA and tinySA program(s) for scripting and automatisation.',
     license='GPLv3',
     platforms=[ 'all' ],
     classifiers=[
@@ -27,6 +27,8 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=[],
     scripts=[ 'nanovna_command.py', 'nanovna_capture.py', 'nanovna_snp.py',
-              'check_s11.py', 'plot_snp.py', 'nanovna_config_split.py' ],
+              'check_s11.py', 'plot_snp.py', 'nanovna_config_split.py',
+              'tinySA_remote.py',
+    ],
     data_files=data_files,
 )
