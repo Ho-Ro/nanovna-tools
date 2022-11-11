@@ -105,22 +105,20 @@ optional arguments:
 
 ```
 
-## tinySA_remote.py
+## nanovna_remote.py
 
-Remote control for the *tinySA* - mirror the screen to your PC and operate the device with the mouse.
+Remote control for the *NanoVNA* or *tinySA* - mirror the screen to your PC and operate the device with the mouse.
 The keys `+` and `-` zoom in and out, `s` takes a screenshot with timestamp, `ESC` quits the program.
 
-Work in progress - the mouse click is not fully working, currently no NanoVNA support.
-
 ```
-usage: tinySA_remote.py [-h] [-d DEVICE] [-t | -n] [-z {2,3,4}]
+usage: nanovna_remote.py [-h] [-d DEVICE] [-t | -n] [-z {2,3,4}]
 
 optional arguments:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to serial usb device
-  -t, --tinySA          use with tinySA (default)
-  -n, --NanoVNA         use with NanoVNA (not yet implemented)
+  -n, --nanovna         use with NanoVNA (default)
+  -t, --tinysa          use with tinySA
   -z {2,3,4}, --zoom {2,3,4}
                         zoom the screen image
 ```

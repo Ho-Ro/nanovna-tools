@@ -28,7 +28,7 @@ setuptools.setup(
     install_requires=[],
     scripts=[ 'nanovna_command.py', 'nanovna_capture.py', 'nanovna_snp.py',
               'check_s11.py', 'plot_snp.py', 'nanovna_config_split.py',
-              'tinySA_remote.py',
+              'nanovna_remote.py',
     ],
     data_files=data_files,
 )
