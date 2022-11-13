@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 '''
-Command line tool to capture a screen shot from NanoVNA
+Command line tool to capture a screen shot from NanoVNA or tinySA
 connect via USB serial, issue the command 'capture'
-and fetch 320x240 rgb565 pixel.
-These pixels are converted to rgb888 values
+and fetch 320x240 or 480x320 rgb565 pixel.
+These pixels are converted to rgb8888 values
 that are stored as an image (e.g. png)
 '''
 
@@ -15,6 +15,7 @@ from datetime import datetime
 import serial
 from serial.tools import list_ports
 import struct
+import sys
 import numpy
 from PIL import Image
 
@@ -36,11 +37,15 @@ def getdevice() -> str:
 ap = argparse.ArgumentParser()
 ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to device' )
-group = ap.add_mutually_exclusive_group()
-group.add_argument( '-n', '--nanovna', action = 'store_true',
+typ = ap.add_mutually_exclusive_group()
+typ.add_argument( '-n', '--nanovna', action = 'store_true',
     help = 'use with NanoVNA-H (default)' )
-group.add_argument( '-t', '--tinysa', action = 'store_true',
+typ.add_argument( '--h4', action = 'store_true',
+    help = 'use with NanoVNA-H4' )
+typ.add_argument( '-t', '--tinysa', action = 'store_true',
     help = 'use with tinySA' )
+typ.add_argument( '--ultra', action = 'store_true',
+    help = 'use with tinySA Ultra' )
 ap.add_argument( "-o", "--out",
     help="write the data into file OUT" )
 
@@ -48,43 +53,50 @@ options = ap.parse_args()
 outfile = options.out
 nanodevice = options.device or getdevice()
 
-if options.tinysa:
-    devicename = 'tinySA'
-else:
-    devicename = 'NanoVNA'
-
-
-# The size of the screen
+# The size of the screen (2.8" devices)
 width = 320
 height = 240
 
+if options.tinysa:
+    devicename = 'tinySA'
+elif options.ultra:
+    devicename = 'tinySA Ultra' # 4" device
+    width = 480
+    height = 320
+elif options.h4:
+    devicename = 'NanoVNA-H4' # 4" device
+    width = 480
+    height = 320
+else:
+    devicename = 'NanoVNA-H'
+
 # NanoVNA sends captured image as 16 bit RGB565 pixel
-size = width * height * 2
-pix_bytes = 2
+size = width * height
 
 crlf = b'\r\n'
 prompt = b'ch> '
 
-ba = b'' # empty bytearray for received pixel values
-
 # do the communication
-with serial.Serial( nanodevice, timeout=1 ) as NanoVNA: # open serial connection
-    NanoVNA.write( b'pause\r' )  # stop screen update
-    echo = NanoVNA.read_until( b'pause' + crlf + prompt ) # wait for completion
+with serial.Serial( nanodevice, timeout=1 ) as nano_tiny: # open serial connection
+    nano_tiny.write( b'pause\r' )  # stop screen update
+    echo = nano_tiny.read_until( b'pause' + crlf + prompt ) # wait for completion
     # print( echo )
-    NanoVNA.write( b'capture\r' )  # request screen capture
-    echo = NanoVNA.read_until( b'capture' + crlf ) # wait for start of transfer
+    nano_tiny.write( b'capture\r' )  # request screen capture
+    echo = nano_tiny.read_until( b'capture' + crlf ) # wait for start of transfer
     # print( echo )
-    while( len( ba ) < size ): # read until ready
-        ba += NanoVNA.read( size - len( ba ) )
-    echo = NanoVNA.read_until( prompt ) # wait for cmd completion
+    bytestream = nano_tiny.read( 2 * size )
+    echo = nano_tiny.read_until( prompt ) # wait for cmd completion
     # print( echo )
-    NanoVNA.write( b'resume\r' )  # resume the screen update
-    echo = NanoVNA.read_until( b'resume' + crlf + prompt ) # wait for completion
+    nano_tiny.write( b'resume\r' )  # resume the screen update
+    echo = nano_tiny.read_until( b'resume' + crlf + prompt ) # wait for completion
     # print( echo )
+
+if len( bytestream ) != 2 * size:
+    print( 'capture error - wrong screen size?' )
+    sys.exit()
 
 # convert bytestream to 1D word array
-rgb565 = struct.unpack( ">76800H", ba )
+rgb565 = struct.unpack( f'>{size}H', bytestream )
 # convert to 32bit numpy array Rrrr.rGgg.gggB.bbbb -> 0000.0000.0000.0000.Rrrr.rGgg.gggB.bbbb
 rgb565_32 = numpy.array( rgb565, dtype=numpy.uint32 )
 # convert zero padded 16bit RGB565 pixel to 32bit RGBA8888 pixel
@@ -92,7 +104,7 @@ rgb565_32 = numpy.array( rgb565, dtype=numpy.uint32 )
 rgba8888 = 0xFF000000 + ((rgb565_32 & 0xF800) >> 8) + ((rgb565_32 & 0x07E0) << 5) + ((rgb565_32 & 0x001F) << 19)
 
 # make an image from pixel array, see: https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.frombuffer
-image =  Image.frombuffer('RGBA', (320, 240), rgba8888, 'raw', 'RGBA', 0, 1)
+image =  Image.frombuffer('RGBA', ( width, height ), rgba8888, 'raw', 'RGBA', 0, 1)
 
 filename = options.out or datetime.now().strftime( f'{devicename}_%Y%m%d_%H%M%S.png' )
 

@@ -25,7 +25,7 @@ Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and
 - Connect via USB serial
 - Issue the command 'pause' to freeze the screen
 - Issue the command 'capture'
-- Fetch 320x240 rgb565 pixels
+- Fetch 320x240 or 480x320 rgb565 pixels
 - Issue the command 'resume' to resume the screen update
 - Disconnect from USB serial
 - Convert pixels to rgba8888 values
@@ -35,14 +35,16 @@ Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and
 The program takes less than 1 second to complete.
 
 ```
-usage: nanovna_capture.py [-h] [-d DEVICE] [-n | -t] [-o OUT]
+usage: nanovna_capture.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-o OUT]
 
 optional arguments:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to device
   -n, --nanovna         use with NanoVNA-H (default)
+  --h4                  use with NanoVNA-H4
   -t, --tinysa          use with tinySA
+  --ultra               use with tinySA Ultra
   -o OUT, --out OUT     write the data into file OUT
 ```
 
@@ -113,14 +115,16 @@ Remote control for the *NanoVNA* or *tinySA* - mirror the screen to your PC and 
 The keys `+` and `-` zoom in and out, `s` takes a screenshot with timestamp, `ESC` quits the program.
 
 ```
-usage: nanovna_remote.py [-h] [-d DEVICE] [-t | -n] [-z {2,3,4}]
+usage: nanovna_remote.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-z {2,3,4}]
 
 optional arguments:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to serial usb device
-  -n, --nanovna         use with NanoVNA (default)
+  -n, --nanovna         use with NanoVNA-H (default)
+  --h4                  use with NanoVNA-H4
   -t, --tinysa          use with tinySA
+  --ultra               use with tinySA Ultra
   -z {2,3,4}, --zoom {2,3,4}
                         zoom the screen image
 ```

@@ -14,6 +14,7 @@ from datetime import datetime
 import serial
 from serial.tools import list_ports
 import struct
+import sys
 import time
 
 import numpy as np
@@ -39,11 +40,15 @@ def getdevice() -> str:
 ap = argparse.ArgumentParser()
 ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to serial usb device' )
-group = ap.add_mutually_exclusive_group()
-group.add_argument( '-n', '--nanovna', action = 'store_true',
+typ = ap.add_mutually_exclusive_group()
+typ.add_argument( '-n', '--nanovna', action = 'store_true',
     help = 'use with NanoVNA-H (default)' )
-group.add_argument( '-t', '--tinysa', action = 'store_true',
+typ.add_argument( '--h4', action = 'store_true',
+    help = 'use with NanoVNA-H4' )
+typ.add_argument( '-t', '--tinysa', action = 'store_true',
     help = 'use with tinySA' )
+typ.add_argument( '--ultra', action = 'store_true',
+    help = 'use with tinySA Ultra' )
 ap.add_argument( '-z', '--zoom', dest = 'zoom',
     type = int, action = 'store', choices = (2,3,4), default = 1,
     help = 'zoom the screen image' )
@@ -52,15 +57,22 @@ options = ap.parse_args()
 tinydevice = options.device or getdevice()
 zoom = options.zoom
 
-if options.tinysa:
-    devicename = 'tinySA'
-else:
-    devicename = 'NanoVNA-H'
-
-
 # The size of the screen
 width = 320
 height = 240
+
+if options.tinysa:
+    devicename = 'tinySA'
+elif options.ultra:
+    devicename = 'tinySA Ultra'
+    width = 480
+    height = 320
+elif options.h4:
+    devicename = 'NanoVNA-H4'
+    width = 480
+    height = 320
+else:
+    devicename = 'NanoVNA-H'
 
 crlf = b'\r\n'
 prompt = b'ch> '
@@ -77,12 +89,12 @@ with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connect
             return
         if what == b'bulk':
             #print( f'bulk, x: {x}, y: {y}, w: {w}, h: {h}' )
-            size = 2 * w * h
-            bytestream = nano_tiny.read( size ) # read a bytestream
-            if len( bytestream ) < size:
+            size = w * h
+            bytestream = nano_tiny.read( 2 * size ) # read a bytestream
+            if len( bytestream ) < 2 * size:
                 #print( bytestream )
                 return
-            words = struct.unpack( f">{w*h}H", bytestream ) # convert to array of words
+            words = struct.unpack( f">{size}H", bytestream ) # convert to array of words
             rectangle = np.reshape( words, ( h, w ) ) # make a rectangle
         elif what == b'fill':
             color = nano_tiny.read( 2 )
@@ -130,12 +142,13 @@ with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connect
     nano_tiny.write( b'capture\r' )
     nano_tiny.read_until( b'capture\r\n' )
     size = width * height
-    bytestream = b''
-    count = 0
-    while count < 2 * size: # timeout may occur
-        bytestream += nano_tiny.read( 2 * size - count ) # read a bytestream
-        count = len( bytestream )
-        #print( count )
+    bytestream = nano_tiny.read( 2 * size ) # read a bytestream
+    if len( bytestream ) != 2 * size:
+        print( 'capture error - wrong screen size?' )
+        sys.exit()
+
+
+
     words = struct.unpack( f'>{size}H', bytestream ) # convert to array of words
     rectangle = np.reshape( words, ( height, width ) ) # make a rectangle
 
