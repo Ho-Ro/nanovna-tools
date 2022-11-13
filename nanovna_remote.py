@@ -99,11 +99,10 @@ with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connect
         # convert RGB565 array to RGBA8888 array
         # Rrrr.rGgg.gggB.bbbb -> Aaaa.aaaa.Rrrr.rrrr.Gggg.gggg.Bbbb.bbbb
         rgba8888 = 0xFF000000 | ((RGB565 & 0xF800) << 8) | ((RGB565 & 0x07E0) << 5) | ((RGB565 & 0x001F) << 3)
-        pil_image = Image.fromarray( rgba8888, 'RGBA' ) # create an PIL image
-        #pil_image = pil_image.resize( ( zoom * width, zoom * height ) ) # scale
+        pil_image = Image.fromarray( rgba8888, 'RGBA' ) # create a PIL image
         image = np.array( pil_image ) # convert from PIL array to np array
         if zoom != 1:
-            image = cv2.resize( image, (zoom * width, zoom * height) )# convert from PIL array to np array
+            image = cv2.resize( image, (zoom * width, zoom * height) ) # resize
         return image
 
 

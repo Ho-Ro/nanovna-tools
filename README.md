@@ -4,7 +4,7 @@ Small ***NanoVNA*** and ***tinySA*** program(s) for scripting and automatisation
 but every other Linux/Unix system should work too. Windows and Mac are untested due to missing HW.
 To build a debian package just type `make deb`. You need to install python3-stdeb,
 the Python to Debian source package conversion plugins for distutils.
-Some python tools require also the modules `matplotlib` and `scikit-rf`,
+Some python tools require also the modules `cv2`, `matplotlib`, `numpy`, `PIL`, and `scikit-rf`,
 which should normally already be on your computer if you are involved
 in RF and microwave data processing and visualisation.
 
@@ -28,19 +28,21 @@ Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and
 - Fetch 320x240 rgb565 pixels
 - Issue the command 'resume' to resume the screen update
 - Disconnect from USB serial
-- Convert pixels to rgb888 values
+- Convert pixels to rgba8888 values
 - Finally store the image as png with date_time stamped name (e.g NanoVNA_20210617_153045.png)
 - You can provide an output file name (-o NAME.EXT) to store also as BMP, GIF, JPEG, PNG or TIFF.
 
 The program takes less than 1 second to complete.
 
 ```
-usage: nanovna_capture.py [-h] [-d DEVICE] [-o OUT]
+usage: nanovna_capture.py [-h] [-d DEVICE] [-n | -t] [-o OUT]
 
 optional arguments:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to device
+  -n, --nanovna         use with NanoVNA-H (default)
+  -t, --tinysa          use with tinySA
   -o OUT, --out OUT     write the data into file OUT
 ```
 
