@@ -1,0 +1,13 @@
+#
+# create constant symlinks for NanoVNA and tinySA devices
+#
+
+ACTION=="add", SUBSYSTEM=="tty", \
+  ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
+  ATTRS{manufacturer}=="nanovna.com", \
+  SYMLINK+="nanovna NanoVNA"
+
+ACTION=="add", SUBSYSTEM=="tty", \
+  ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
+  ATTRS{manufacturer}=="tinysa.org", \
+  SYMLINK+="tinysa tinySA"
