@@ -5,9 +5,9 @@
 ACTION=="add", SUBSYSTEM=="tty", \
   ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
   ATTRS{manufacturer}=="nanovna.com", \
-  SYMLINK+="nanovna NanoVNA"
+  SYMLINK+="nanovna"
 
 ACTION=="add", SUBSYSTEM=="tty", \
   ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
   ATTRS{manufacturer}=="tinysa.org", \
-  SYMLINK+="tinysa tinySA"
+  SYMLINK+="tinysa"
