@@ -1,25 +1,34 @@
 # Toolbox for NanoVNA and tinySA
 
-Small ***NanoVNA*** and ***tinySA*** program(s) for scripting and automatisation, developed on Debian stable (bullseye),
-but every other Linux/Unix system should work too. Windows and Mac are untested due to missing HW.
-To build a debian package just type `make deb`. You need to install python3-stdeb,
-the Python to Debian source package conversion plugins for distutils.
-Some python tools require also the modules `cv2`, `matplotlib`, `numpy`, `PIL`, and `scikit-rf`,
-which should normally already be on your computer if you are involved
-in RF and microwave data processing and visualisation.
+Small ***NanoVNA*** and ***tinySA*** programs for scripting and automation,
+developed on Debian stable (bullseye), but any other Linux/Unix system should work.
+Windows and Mac are untested due to lack of HW.
+The Python tools can be used without installation on all systems where
+a Python interpreter is available,
+this is standard for Linux and Mac.
+For Windows you have to install Python separately.
+Some Python tools also require the modules `cv2`, `matplotlib`, `numpy`, `PIL` and `scikit-rf`,
+which should normally already be present on your computer if you are involved
+in processing and visualising RF and microwave data with Python.
+If you are working under Linux and want to install the tool in your path,
+you can create a Debian package by typing `make deb`.
+For this you need to install python3-stdeb,
+the module for converting Python code and modules to a Debian package.
 
-## nanovna_command.py
+## Communication and Measurement
+
+### nanovna_command.py
 
 A simple gateway to the *NanoVNA* or *tinySA* shell commands for use in automatisation scripts, e.g.:
 
     ./nanovna_command.py help
     Commands: scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth vbat_offset transform threshold help info version color
 
-## nanovna_command.c
+### nanovna_command.c
 
 The same function, coded in C.
 
-## nanovna_capture.py
+### nanovna_capture.py
 
 Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png:
 - Connect via USB serial
@@ -48,14 +57,14 @@ optional arguments:
   -o OUT, --out OUT     write the data into file OUT
 ```
 
-## nanovna_capture.c
+### nanovna_capture.c
 
 An even faster command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png.
 It works similar to the python above and is a proof of concept how to communicate over USB serial in c.
 Usage: "nanovna_capture NAME.EXT" -> Stores screenshot as PNG unless EXT == "ppm"
 PNG format is provided by `libpng` and `libpng-dev`, NetPBM format needs no extra library support.
 
-## nanovna_snp.py
+### nanovna_snp.py
 
 Command line tool to fetch S11, S21 or S11 & S21 parameter from *NanoVNA-H*.
 Save as S-parameter (1 port or 2 port) or Z-parameter (1 port) in "touchstone" format (rev 1.1).
@@ -76,7 +85,22 @@ optional arguments:
   -z, --z1p             store Z-parameter for 1-port device
 ```
 
-## plot_snp.py
+The Z-parameter are stored as normalized (R/Z0 + jX/Z0) values, as also mentioned in the comment of the data:
+
+```
+! NanoVNA 20230112_105451
+! scan 50000 900000000 101 3
+! 1-port normalized Z-parameter (R/Z0 + jX/Z0)
+# HZ Z RI R 50
+     50000     1.042313132     0.000526267
+   9049500     1.047180375     0.070234472
+  18049000     1.052795732     0.137763222
+...
+ 891000500     0.118583454    -1.276420745
+ 900000000     0.111755060    -1.256828212
+```
+
+### plot_snp.py
 
 Plot a `*.s[12]p` file in touchstone format. Render S11 as smith diagram and S21 (if available) as magnitude and phase into one figure.
 
@@ -91,7 +115,7 @@ optional arguments:
   -x, --xkcd  draw the plot in xkcd style :)
 ```
 
-## check_s11.py
+### check_s11.py
 
 Check S parameter files for values with |S11| > 1 that may indicate a calibration issue.
 
@@ -109,7 +133,7 @@ optional arguments:
 
 ```
 
-## nanovna_remote.py
+### nanovna_remote.py
 
 Remote control for the *NanoVNA* or *tinySA* - mirror the screen to your PC and operate the device with the mouse.
 The keys `+` and `-` zoom in and out, `s` takes a screenshot with timestamp, `ESC` quits the program.
@@ -129,7 +153,9 @@ optional arguments:
                         zoom the screen image
 ```
 
-## nanovna_config.sh
+## Low Level Tools
+
+### nanovna_config.sh
 
 Tool to read or write the configuration and calibration data of NanoVNA[-H|-H4]
 This is stored on top of flash memory, address and size depend on device and FW variant
@@ -150,7 +176,7 @@ or:
 nanovna_config.sh RESTORE FILENAME
 ```
 
-## nanovna_config_split.py
+### nanovna_config_split.py
 
 Tool to process the config data block of a NanoVNA-H retrieved with `nanovna_config.sh`
 and save the data as individual files for each calibration slot and global config data
@@ -191,11 +217,11 @@ config  0x08018000          config  0x0801F800
                             7       0x08013800
 ```
 
-Reason:
-My FW modification omitted the SD functions, because my NanoVNA-H device has no SD card slot.
+#### Reason:
+In my FW modification, I omitted the SD functions because my NanoVNA-H HW V3.4 does not have an SD card slot.
 The increased free flash memory can be used to store 8 calibration slots instead of 5.
 I also reverted the locations of the data and put config on top of flash and the slots
 below in descending order. This has the advantage that with increased program size in
-future versions the highest slot(s) can be removed and config is untouched, while in
-original FW the config date and the low slot(s) will be overwritten 1st.
+future versions the highest slot(s) can be removed and the config data is untouched,
+while in original FW the config date and the low slot(s) will be overwritten 1st.
 
