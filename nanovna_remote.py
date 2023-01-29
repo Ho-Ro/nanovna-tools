@@ -66,6 +66,7 @@ zoom = options.zoom
 width = 320
 height = 240
 
+# set by option
 if options.tinysa:
     devicename = 'tinySA'
 elif options.ultra:
@@ -76,9 +77,19 @@ elif options.h4:
     devicename = 'NanoVNA-H4'
     width = 480
     height = 320
-elif device and 'tinysa' in device.description.lower():
+# get it from USB descriptor (supported by newer FW from DiSlord or Erik)
+elif device and 'tinySA4' in device.description:
+    devicename = 'tinySA Ultra'
+    width = 480
+    height = 320
+elif device and 'tinySA' in device.description:
     devicename = 'tinySA'
-else: # set default name
+elif device and 'NanoVNA-H4' in device.description:
+    devicename = 'NanoVNA-H4'
+    width = 480
+    height = 320
+# fall back to default name
+else:
     devicename = 'NanoVNA-H'
 
 crlf = b'\r\n'
@@ -221,7 +232,6 @@ with serial.Serial( nano_tiny_device, timeout=0.5) as nano_tiny: # open serial c
     print( 'cleaning up ...' )
 
     nano_tiny.write( b'refresh off\r' )  # stop screen remote
-    time.sleep( 1  )
 
     cv2.destroyAllWindows()
 
