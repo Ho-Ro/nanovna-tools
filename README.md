@@ -14,6 +14,12 @@ If you are working under Linux and want to install the tool in your path,
 you can create a Debian package by typing `make deb`.
 For this you need to install python3-stdeb,
 the module for converting Python code and modules to a Debian package.
+This package contains also an udev rule that allows user access to the USB serial port of NanoVNA and tinySA.
+This rule also creates also a symlink, either `/dev/nanovna` or `/dev/tinysa`
+for recent FW versions that announce the device type.
+
+The python commands will detect the serial port automatically,
+but can be overruled with the option `-d` if you have more than one device connected.
 
 ## Communication and Measurement
 

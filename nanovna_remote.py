@@ -31,8 +31,7 @@ def getdevice() -> str:
     device_list = list_ports.comports()
     for device in device_list:
         if device.vid == VID and device.pid == PID:
-            #print( device )
-            return device.device
+            return device
     raise OSError("device not found")
 
 
@@ -54,7 +53,13 @@ ap.add_argument( '-z', '--zoom', dest = 'zoom',
     help = 'zoom the screen image' )
 
 options = ap.parse_args()
-tinydevice = options.device or getdevice()
+if options.device:
+    device = None
+    nano_tiny_device = options.device
+else:
+    device = getdevice()
+    nano_tiny_device = device.device
+
 zoom = options.zoom
 
 # The size of the screen
@@ -71,15 +76,16 @@ elif options.h4:
     devicename = 'NanoVNA-H4'
     width = 480
     height = 320
-else:
+elif device and 'tinysa' in device.description.lower():
+    devicename = 'tinySA'
+else: # set default name
     devicename = 'NanoVNA-H'
 
 crlf = b'\r\n'
 prompt = b'ch> '
 
-
 # do the communication
-with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connection
+with serial.Serial( nano_tiny_device, timeout=0.5) as nano_tiny: # open serial connection
 
     def do_region( what ):
         where = nano_tiny.read( 8 )
@@ -139,12 +145,16 @@ with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connect
         nano_tiny.read( nano_tiny.inWaiting() )
         time.sleep( 0.1)
 
-    nano_tiny.write( b'capture\r' )
-    nano_tiny.read_until( b'capture\r\n' )
+    cmd = b'capture'
+    nano_tiny.write( cmd + b'\r' )
+    nano_tiny.read_until( cmd + b'\r\n' )
     size = width * height
     bytestream = nano_tiny.read( 2 * size ) # read a bytestream
     if len( bytestream ) != 2 * size:
-        print( 'capture error - wrong screen size?' )
+        if bytestream == cmd + b'?\r\nch> ': # error message
+            print( 'capture error - does the device support the "capture" cmd?' )
+        else:
+            print( 'capture error - wrong screen size?' )
         sys.exit()
 
 
@@ -208,7 +218,7 @@ with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connect
         except KeyboardInterrupt:         # ^C pressed, stop measurement
             refresh_image = NO            # exit
 
-    print( 'cleaning up ...')
+    print( 'cleaning up ...' )
 
     nano_tiny.write( b'refresh off\r' )  # stop screen remote
     time.sleep( 1  )
@@ -217,5 +227,5 @@ with serial.Serial( tinydevice, timeout=0.5) as nano_tiny: # open serial connect
 
     while nano_tiny.inWaiting(): # clear serial buffer
         nano_tiny.read( nano_tiny.inWaiting() )
-        time.sleep( 0.5 )
+        time.sleep( 0.02 )
 
