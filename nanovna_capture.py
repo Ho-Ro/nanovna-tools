@@ -29,7 +29,7 @@ def getdevice() -> str:
     device_list = list_ports.comports()
     for device in device_list:
         if device.vid == VID and device.pid == PID:
-            return device.device
+            return device
     raise OSError("device not found")
 
 
@@ -48,25 +48,45 @@ typ.add_argument( '--ultra', action = 'store_true',
     help = 'use with tinySA Ultra' )
 ap.add_argument( "-o", "--out",
     help="write the data into file OUT" )
+ap.add_argument( "-p", "--pause", action = 'store_true',
+    help="stop display refresh before capturing" )
 
 options = ap.parse_args()
 outfile = options.out
-nanodevice = options.device or getdevice()
+if options.device:
+    device = None
+    nano_tiny_device = options.device
+else:
+    device = getdevice()
+    nano_tiny_device = device.device
 
 # The size of the screen (2.8" devices)
 width = 320
 height = 240
 
+# set by option
 if options.tinysa:
     devicename = 'tinySA'
 elif options.ultra:
-    devicename = 'tinySA Ultra' # 4" device
+    devicename = 'tinySA Ultra'
     width = 480
     height = 320
 elif options.h4:
-    devicename = 'NanoVNA-H4' # 4" device
+    devicename = 'NanoVNA-H4'
     width = 480
     height = 320
+# get it from USB descriptor (supported by newer FW from DiSlord or Erik)
+elif device and 'tinySA4' in device.description:
+    devicename = 'tinySA Ultra'
+    width = 480
+    height = 320
+elif device and 'tinySA' in device.description:
+    devicename = 'tinySA'
+elif device and 'NanoVNA-H4' in device.description:
+    devicename = 'NanoVNA-H4'
+    width = 480
+    height = 320
+# fall back to default name
 else:
     devicename = 'NanoVNA-H'
 
@@ -77,26 +97,27 @@ crlf = b'\r\n'
 prompt = b'ch> '
 
 # do the communication
-with serial.Serial( nanodevice, timeout=1 ) as nano_tiny: # open serial connection
-    nano_tiny.write( b'pause\r' )  # stop screen update
-    echo = nano_tiny.read_until( b'pause' + crlf + prompt ) # wait for completion
-    # print( echo )
+with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial connection
+    if options.pause:
+        nano_tiny.write( b'pause\r' )  # stop screen update
+        echo = nano_tiny.read_until( b'pause' + crlf + prompt ) # wait for completion
     nano_tiny.write( b'capture\r' )  # request screen capture
     echo = nano_tiny.read_until( b'capture' + crlf ) # wait for start of transfer
-    # print( echo )
-    bytestream = nano_tiny.read( 2 * size )
+    captured_bytes = nano_tiny.read( 2 * size )
     echo = nano_tiny.read_until( prompt ) # wait for cmd completion
-    # print( echo )
-    nano_tiny.write( b'resume\r' )  # resume the screen update
-    echo = nano_tiny.read_until( b'resume' + crlf + prompt ) # wait for completion
-    # print( echo )
+    if options.pause:
+        nano_tiny.write( b'resume\r' )  # resume the screen update
+        echo = nano_tiny.read_until( b'resume' + crlf + prompt ) # wait for completion
 
-if len( bytestream ) != 2 * size:
-    print( 'capture error - wrong screen size?' )
+if len( captured_bytes ) != 2 * size:
+    if bytestream == b'capture?\r\nch> ': # error message
+        print( 'capture error - does the device support the "capture" cmd?' )
+    else:
+        print( 'capture error - wrong screen size?' )
     sys.exit()
 
-# convert bytestream to 1D word array
-rgb565 = struct.unpack( f'>{size}H', bytestream )
+# convert captured_bytes to 1D word array
+rgb565 = struct.unpack( f'>{size}H', captured_bytes )
 # convert to 32bit numpy array Rrrr.rGgg.gggB.bbbb -> 0000.0000.0000.0000.Rrrr.rGgg.gggB.bbbb
 rgb565_32 = numpy.array( rgb565, dtype=numpy.uint32 )
 # convert zero padded 16bit RGB565 pixel to 32bit RGBA8888 pixel

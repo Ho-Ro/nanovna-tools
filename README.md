@@ -50,7 +50,7 @@ Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and
 The program takes less than 1 second to complete.
 
 ```
-usage: nanovna_capture.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-o OUT]
+usage: nanovna_capture.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-o OUT] [-p]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -61,6 +61,8 @@ optional arguments:
   -t, --tinysa          use with tinySA
   --ultra               use with tinySA Ultra
   -o OUT, --out OUT     write the data into file OUT
+  -p, --pause           pause display refresh before capturing
+
 ```
 
 ### nanovna_capture.c
@@ -157,6 +159,19 @@ optional arguments:
   --ultra               use with tinySA Ultra
   -z {2,3,4}, --zoom {2,3,4}
                         zoom the screen image
+```
+
+### nanovna_timesync.py
+
+Sync the RTC of *NanoVNA-H* or *NanoVNA-H4* with the system time
+
+```
+usage: nanovna_timesync.py [-h] [-d DEVICE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DEVICE, --device DEVICE
+                        connect to device
 ```
 
 ## Low Level Tools
