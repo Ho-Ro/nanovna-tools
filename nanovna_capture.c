@@ -19,15 +19,13 @@
 #include <unistd.h>
 
 
-const char *nano_port = "/dev/ttyACM0";
-
 const int nano_width = 320;
 const int nano_height = 240;
 
 static int nano_fd = 0;
 
 
-static int nano_open() {
+static int nano_open( const char* nano_port ) {
     nano_fd = open( nano_port, O_RDWR | O_NOCTTY | O_SYNC );
     if ( nano_fd < 0 ) {
         fprintf( stderr, "Error opening %s: %s\n", nano_port, strerror( errno ) );
@@ -265,8 +263,17 @@ int main( int argc, char **argv ) {
     char name[ 256 ];
     char *target = name;
     char *title = "NanoVNA screenshot";
+    char *nano_port = "/dev/ttyACM0";
 
-    if ( nano_open() < 0 ) // connect to NanoVNA
+    if ( argc > 1 ) {
+        if ( strlen( argv[ 1 ] ) > 5 && 0 == strncmp( argv[ 1 ], "/dev/", 5 ) ) {
+            nano_port = argv[1];
+            --argc;
+            ++argv;
+        }
+    }
+
+    if ( nano_open( nano_port ) < 0 ) // connect to NanoVNA
         return -1;
 
     if ( argc > 1 ) {

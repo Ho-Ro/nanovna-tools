@@ -32,7 +32,7 @@ def getdevice() -> str:
 outfile = sys.stdout
 
 # construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
+ap = argparse.ArgumentParser( description='Save S parameter from NanoVNA-H in "touchstone" format')
 ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to device' )
 ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),

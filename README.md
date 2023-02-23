@@ -50,7 +50,9 @@ Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and
 The program takes less than 1 second to complete.
 
 ```
-usage: nanovna_capture.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-o OUT] [-p]
+usage: nanovna_capture.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-i] [-o OUT] [-p]
+
+Capture a screen shot from NanoVNA or tinySA
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -60,16 +62,17 @@ optional arguments:
   --h4                  use with NanoVNA-H4
   -t, --tinysa          use with tinySA
   --ultra               use with tinySA Ultra
+  -i, --invert          invert the colors, e.g. for printing
   -o OUT, --out OUT     write the data into file OUT
-  -p, --pause           pause display refresh before capturing
-
+  -p, --pause           stop display refresh before capturing
 ```
 
 ### nanovna_capture.c
 
 An even faster command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png.
 It works similar to the python above and is a proof of concept how to communicate over USB serial in c.
-Usage: "nanovna_capture NAME.EXT" -> Stores screenshot as PNG unless EXT == "ppm"
+Usage: `nanovna_capture [NANOPORT] [NAME.EXT]` -> Stores screenshot as PNG unless EXT == "ppm".
+Opens `/dev/ttyACM0` unless the 1st argument starts with `/dev/`.
 PNG format is provided by `libpng` and `libpng-dev`, NetPBM format needs no extra library support.
 
 ### nanovna_snp.py
@@ -81,6 +84,8 @@ Do it as an exercise - step by step - without using tools like scikit-rf.
 
 ```
 usage: nanovna_snp.py [-h] [-d DEVICE] [-o [FILE]] [-1 | -2 | -z]
+
+Save S parameter from NanoVNA-H in "touchstone" format
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -115,6 +120,8 @@ Plot a `*.s[12]p` file in touchstone format. Render S11 as smith diagram and S21
 ```
 usage: plot_snp.py [-h] [-x] infile
 
+Plot S11 as smith chart and S22 as dB/phase
+
 positional arguments:
   infile      infile in touchstone format
 
@@ -147,7 +154,9 @@ Remote control for the *NanoVNA* or *tinySA* - mirror the screen to your PC and 
 The keys `+` and `-` zoom in and out, `s` takes a screenshot with timestamp, `ESC` quits the program.
 
 ```
-usage: nanovna_remote.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-z {2,3,4}]
+usage: nanovna_remote.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-i] [-z {2,3,4}]
+
+Remote control NanoVNA-H or tinySA
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -157,21 +166,25 @@ optional arguments:
   --h4                  use with NanoVNA-H4
   -t, --tinysa          use with tinySA
   --ultra               use with tinySA Ultra
+  -i, --invert          invert the colors, e.g. for printing of screen shots
   -z {2,3,4}, --zoom {2,3,4}
                         zoom the screen image
 ```
 
-### nanovna_timesync.py
+### nanovna_time.py
 
-Sync the RTC of *NanoVNA-H* or *NanoVNA-H4* with the system time
+Show the RTC time of *NanoVNA-H* or *NanoVNA-H4* and sync it with the system time
 
 ```
-usage: nanovna_timesync.py [-h] [-d DEVICE]
+usage: nanovna_time.py [-h] [-d DEVICE] [-s]
+
+Show and sync the RTC time of NanoVNA-H or NanoVNA-H4
 
 optional arguments:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to device
+  -s, --sync            sync the NanoVNA time to the system time
 ```
 
 ## Low Level Tools

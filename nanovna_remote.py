@@ -36,7 +36,7 @@ def getdevice() -> str:
 
 
 # construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
+ap = argparse.ArgumentParser( description='Remote control NanoVNA-H or tinySA')
 ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to serial usb device' )
 typ = ap.add_mutually_exclusive_group()
@@ -48,6 +48,8 @@ typ.add_argument( '-t', '--tinysa', action = 'store_true',
     help = 'use with tinySA' )
 typ.add_argument( '--ultra', action = 'store_true',
     help = 'use with tinySA Ultra' )
+ap.add_argument( "-i", "--invert", action = 'store_true',
+    help="invert the colors, e.g. for printing of screen shots" )
 ap.add_argument( '-z', '--zoom', dest = 'zoom',
     type = int, action = 'store', choices = (2,3,4), default = 1,
     help = 'zoom the screen image' )
@@ -127,7 +129,11 @@ with serial.Serial( nano_tiny_device, timeout=0.5) as nano_tiny: # open serial c
     def make_image():
         # convert RGB565 array to RGBA8888 array
         # Rrrr.rGgg.gggB.bbbb -> Aaaa.aaaa.Rrrr.rrrr.Gggg.gggg.Bbbb.bbbb
-        rgba8888 = 0xFF000000 | ((RGB565 & 0xF800) << 8) | ((RGB565 & 0x07E0) << 5) | ((RGB565 & 0x001F) << 3)
+        # apply invert option for better printing with white background
+        if options.invert:
+            rgba8888 = 0xFF000000 | (((RGB565 & 0xF800) << 8) | ((RGB565 & 0x07E0) << 5) | ((RGB565 & 0x001F) << 3)) ^ 0x00FFFFFF
+        else:
+            rgba8888 = 0xFF000000 | ((RGB565 & 0xF800) << 8) | ((RGB565 & 0x07E0) << 5) | ((RGB565 & 0x001F) << 3)
         pil_image = Image.fromarray( rgba8888, 'RGBA' ) # create a PIL image
         image = np.array( pil_image ) # convert from PIL array to np array
         if zoom != 1:

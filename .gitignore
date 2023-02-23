@@ -7,8 +7,8 @@
 *.kate-swp
 .directory
 
-NanoVNA_20*_*.png
-tinySA_20*_*.png
+NanoVNA*.png
+tinySA_*.png
 *.ppm
 
 # binaries

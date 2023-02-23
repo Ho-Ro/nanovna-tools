@@ -34,7 +34,7 @@ def getdevice() -> str:
 
 
 # construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
+ap = argparse.ArgumentParser( description='Capture a screen shot from NanoVNA or tinySA')
 ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to device' )
 typ = ap.add_mutually_exclusive_group()
@@ -46,6 +46,8 @@ typ.add_argument( '-t', '--tinysa', action = 'store_true',
     help = 'use with tinySA' )
 typ.add_argument( '--ultra', action = 'store_true',
     help = 'use with tinySA Ultra' )
+ap.add_argument( "-i", "--invert", action = 'store_true',
+    help="invert the colors, e.g. for printing" )
 ap.add_argument( "-o", "--out",
     help="write the data into file OUT" )
 ap.add_argument( "-p", "--pause", action = 'store_true',
@@ -120,9 +122,14 @@ if len( captured_bytes ) != 2 * size:
 rgb565 = struct.unpack( f'>{size}H', captured_bytes )
 # convert to 32bit numpy array Rrrr.rGgg.gggB.bbbb -> 0000.0000.0000.0000.Rrrr.rGgg.gggB.bbbb
 rgb565_32 = numpy.array( rgb565, dtype=numpy.uint32 )
+
 # convert zero padded 16bit RGB565 pixel to 32bit RGBA8888 pixel
 # 0000.0000.0000.0000.Rrrr.rGgg.gggB.bbbb -> 1111.1111.Rrrr.r000.Gggg.gg00.Bbbb.b000
-rgba8888 = 0xFF000000 + ((rgb565_32 & 0xF800) >> 8) + ((rgb565_32 & 0x07E0) << 5) + ((rgb565_32 & 0x001F) << 19)
+# apply invert option for better printing with white background
+if options.invert:
+    rgba8888 = 0xFF000000 + (((rgb565_32 & 0xF800) >> 8) + ((rgb565_32 & 0x07E0) << 5) + ((rgb565_32 & 0x001F) << 19)) ^ 0x00FFFFFF
+else:
+    rgba8888 = 0xFF000000 + (((rgb565_32 & 0xF800) >> 8) + ((rgb565_32 & 0x07E0) << 5) + ((rgb565_32 & 0x001F) << 19))
 
 # make an image from pixel array, see: https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.frombuffer
 image =  Image.frombuffer('RGBA', ( width, height ), rgba8888, 'raw', 'RGBA', 0, 1)
