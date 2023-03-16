@@ -187,6 +187,29 @@ optional arguments:
   -s, --sync            sync the NanoVNA time to the system time
 ```
 
+### tinysa_scanraw.py
+
+Get a CSV formatted scan from the *tinySA*
+
+usage: tinysa_scanraw.py [-h] [-d DEVICE] [-s START] [-e END] [-p POINTS] [-r RBW] [-c] [-v]
+
+Get a raw scan from tinySA, formatted as csv (freq, power)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DEVICE, --device DEVICE
+                        connect to serial device
+  -s START, --start START
+                        start frequency, default = 0 Hz
+  -e END, --end END     end frequency, default = 350000000 Hz
+  -p POINTS, --points POINTS
+                        Number of sweep points, default = 101
+  -r RBW, --rbw RBW     resolution bandwidth / Hz, default = 0 (calculate RBW from scan steps)
+  -c, --comma           use comma as decimal separator
+  -v, --verbose         provide info about scan parameter and timing
+
+
+
 ## Low Level Tools
 
 ### nanovna_config.sh
