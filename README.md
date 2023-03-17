@@ -191,6 +191,7 @@ optional arguments:
 
 Get a CSV formatted scan from the *tinySA*
 
+```
 usage: tinysa_scanraw.py [-h] [-d DEVICE] [-s START] [-e END] [-p POINTS] [-r RBW] [-c] [-v]
 
 Get a raw scan from tinySA, formatted as csv (freq, power)
@@ -207,7 +208,7 @@ optional arguments:
   -r RBW, --rbw RBW     resolution bandwidth / Hz, default = 0 (calculate RBW from scan steps)
   -c, --comma           use comma as decimal separator
   -v, --verbose         provide info about scan parameter and timing
-
+```
 
 
 ## Low Level Tools
