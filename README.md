@@ -83,7 +83,7 @@ Connect via USB serial, issue the command, calculate, and format the response.
 Do it as an exercise - step by step - without using tools like scikit-rf.
 
 ```
-usage: nanovna_snp.py [-h] [-d DEVICE] [-o [FILE]] [-1 | -2 | -z]
+usage: nanovna_snp.py [-h] [-d DEVICE] [-o [FILE]] [-c] [-1 | -2 | -z]
 
 Save S parameter from NanoVNA-H in "touchstone" format
 
@@ -93,6 +93,8 @@ optional arguments:
                         connect to device
   -o [FILE], --out [FILE]
                         write output to FILE, default = <stdout>
+  -c, --comment         add comments to output file (may break some simple tools, e.g.
+                        octave's load("-ascii" ...))
   -1, --s1p             store S-parameter for 1-port device (default)
   -2, --s2p             store S-parameter for 2-port device
   -z, --z1p             store Z-parameter for 1-port device

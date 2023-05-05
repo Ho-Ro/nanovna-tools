@@ -37,8 +37,8 @@ ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to device' )
 ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),
     help = f'write output to FILE, default = {outfile.name}', metavar = 'FILE', default = outfile )
-# ap.add_argument( '-v', '--verbose', dest = 'verbose', default = False, action= 'store_true',
-#     help = 'be verbose' )
+ap.add_argument( '-c', '--comment', dest = 'comment', default = False, action= 'store_true',
+    help = 'add comments to output file (may break some simple tools, e.g. octave\'s load("-ascii" ...))' )
 fmt = ap.add_mutually_exclusive_group()
 fmt.add_argument( '-1', '--s1p', action = 'store_true',
     help = 'store S-parameter for 1-port device (default)' )
@@ -109,7 +109,7 @@ def format_parameter_line( line ):
         Denom = ( 1 - S11r ) * ( 1 - S11r ) + Si2
         Rn = ( 1 - Sr2 - Si2 ) / Denom
         Xn = ( 2 * S11i ) / Denom
-        return f'{freq:10.0f} {Rn:15.9f} {Xn:15.9f}'
+        return f'{freq:.0f} {Rn:15.9f} {Xn:15.9f}'
     elif s2p:
         # format a line with freq, S11, S21, S12, S22 (Sxx as re/im pair)
         freq, S11r, S11i, S21r, S21i = line.split()
@@ -118,7 +118,7 @@ def format_parameter_line( line ):
         S11i = float( S11i )
         S21r = float( S21r )
         S21i = float( S21i )
-        line = f'{freq:10.0f} {S11r:12.9f} {S11i:12.9f}'
+        line = f'{freq:.0f} {S11r:12.9f} {S11i:12.9f}'
         line += f' {S21r:12.9f} {S21i:12.9f}'
         line += '  0  0  0  0' # S12 and S22 are 0+j0
         return line
@@ -128,7 +128,7 @@ def format_parameter_line( line ):
         freq = float( freq )
         S11r = float( S11r )
         S11i = float( S11i )
-        return f'{freq:10.0f} {S11r:12.9f} {S11i:12.9f}'
+        return f'{freq:.0f} {S11r:12.9f} {S11i:12.9f}'
 
 
 def output_string( line ):
@@ -137,6 +137,18 @@ def output_string( line ):
     else:
         outfile.write( ( line + lf ).encode() )
 
+
+# Touchstone data files may include comments. Comments are preceded by an exclamation mark (!).
+# Comments may appear on a separate line, or after the last data value on a line. Comments are
+# terminated by a line termination sequence or character (i.e., multi-line comments are not allowed).
+# The syntax rules for comments are identical for Version 1.0 and Version 2.0 files.
+
+if options.comment:
+    output_string( comment )
+
+# Rules for Version 1.0 Files:
+# For Version 1.0 files, the option line shall precede any data lines
+# and shall be the first non-comment, nonblank line in the file.
 
 # write data as touchstone file (Rev. 1.1)
 # Frequency unit: Hz
@@ -152,8 +164,6 @@ if z1p:
     parameter = 'Z'
 else:
     parameter = 'S'
-
-output_string( comment )
 
 # option header
 output_string( f'# {frequency_unit} {parameter} {format} R {Z0}' )
