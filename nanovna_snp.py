@@ -39,6 +39,8 @@ ap.add_argument( '-o', '--out', nargs = '?', type=argparse.FileType( 'wb' ),
     help = f'write output to FILE, default = {outfile.name}', metavar = 'FILE', default = outfile )
 ap.add_argument( '-c', '--comment', dest = 'comment', default = False, action= 'store_true',
     help = 'add comments to output file (may break some simple tools, e.g. octave\'s load("-ascii" ...))' )
+ap.add_argument( '-t', '--timeout', dest = 'timeout', type = int, default = 3,
+    help = 'timeout for data transfer (default = 3 s)' )
 fmt = ap.add_mutually_exclusive_group()
 fmt.add_argument( '-1', '--s1p', action = 'store_true',
     help = 'store S-parameter for 1-port device (default)' )
@@ -63,7 +65,7 @@ prompt = 'ch> '
 Z0 = 50 # nominal impedance
 
 
-with serial.Serial( nanodevice, timeout=1 ) as NanoVNA: # open serial connection
+with serial.Serial( nanodevice, timeout=options.timeout ) as NanoVNA: # open serial connection
 
     def execute( cmd ):
         NanoVNA.write( (cmd + cr).encode() )                  # send command and options terminated by CR
