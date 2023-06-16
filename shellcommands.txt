@@ -1,5 +1,11 @@
 Commands:
 
+bandwidth cal capture clearconfig color config data dump edelay freq frequencies
+help info marker measure pause power recall refresh release reset resume s21offset
+save saveconfig scan scan_bin smooth sweep tcxo threshold time touch touchcal touchtest
+trace transform usart usart_cfg vbat vbat_offset version
+
+
 - bandwidth {bw}
   Show or set bandwidth, bw=0: 4000 Hz, 1: 2000 Hz, n: 4000 Hz / (bw+1)
 
@@ -15,11 +21,16 @@ Commands:
 - color {id} {rgb24}
   Show or set the different item colors
 
+- config {auto|avg|connection|mode|grid|dot|bk|flip|separator} [0|1]
+
 - data [array]
   Get complex data
   0: S11, 1: S21,
   2: CAL_LOAD, 3: CAL_OPEN, 4: CAL_SHORT, 5: CAL_THRU, 6: CAL_ISOLN
   or 2: ETERM_ED, 3: ETERM_ES, 4: ETERM_ER, 5: ETERM_ET, 6: ETERM_EX
+
+- dump
+  Returns buffer with data received from audio codec
 
 - edelay {t(ps)}
   Show or set edelay
@@ -39,6 +50,8 @@ Commands:
 - marker [n] [off|{index}]
   Show value of active marker
 
+- measure {none|lc|lcshunt|lcseries|xtal|cable|resonance}
+
 - pause
   Pause measurement and screen update
 
@@ -48,11 +61,21 @@ Commands:
 - recall {id}
   Recall setting id = 0..4
 
+- refresh
+
+- release
+  touch up event
+
 - reset
   Reset NanoVNA
 
+- reset dfu
+  Reset NanoVNA into DFU mode
+
 - resume
   Resume measurement and screen update
+
+- s21offset
 
 - save {id}
   Save setting id = 0..4
@@ -82,6 +105,12 @@ Commands:
 - threshold {frequency(Hz)}
   Show or set the frequency when to switch into harmonic mode
 
+- time
+  time {[y|m|d|h|min|sec] 0-99} or {b 0xYYMMDD 0xHHMMSS}
+
+- touch {x y}
+  touch down event at x:y
+
 - touchcal
   Initialize the touch calibration
 
@@ -93,6 +122,10 @@ Commands:
 
 - transform {on|off|impulse|step|bandpass|minimum|normal|maximum} [...]
   Switch into TDR mode
+
+- usart
+
+- usart_cfg
 
 - vbat
   Show battery voltage
