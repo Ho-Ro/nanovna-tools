@@ -1,10 +1,25 @@
-Commands:
+Protocol
+========
 
-bandwidth cal capture clearconfig color config data dump edelay freq frequencies
-help info marker measure pause power recall refresh release reset resume s21offset
-save saveconfig scan scan_bin smooth sweep tcxo threshold time touch touchcal touchtest
-trace transform usart usart_cfg vbat vbat_offset version
+NanoVNA sends the prompt 'ch> ' when ready to receive a command.
+Send command string terminated with '\r' (<CR> = 0x0D)
+NanoVNA echoes the command string terminated with '\r\n' (<CR>,<LF> = 0x0D,0x0A)
+NanoVNA sends the command response - format depends on type of command
+NanoVNA terminates the response with '\r\n'
+NanoVNA sends the prompt 'ch> ' and waits for next command
 
+(This protocol is also used by tinySA)
+
+Commands
+========
+
+  bandwidth cal capture clearconfig color config data dump edelay freq frequencies
+  help info marker measure pause power recall refresh release reset resume s21offset
+  save saveconfig scan scan_bin smooth sweep tcxo threshold time touch touchcal touchtest
+  trace transform usart usart_cfg vbat vbat_offset version
+
+Command syntax
+==============
 
 - bandwidth {bw}
   Show or set bandwidth, bw=0: 4000 Hz, 1: 2000 Hz, n: 4000 Hz / (bw+1)
