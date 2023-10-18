@@ -18,8 +18,9 @@ nanovna_command
 *.s1p
 *.s2p
 *.z1p
+*.csv
 
-scikit-rf
+scikit-rf/skrf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
