@@ -7,7 +7,6 @@ import os
 import argparse as ap
 from glob import iglob
 
-import skrf as rf
 from skrf import Network
 
 
@@ -30,13 +29,14 @@ def check_nw( nw ):
 
 def check_files( pattern, verbose ):
     for snp in [ fff for fff in iglob( pattern, recursive=True ) if os.path.isfile( fff ) ]:
-        check = check_nw( Network( snp ) )
+        nw = Network( snp )
+        check = check_nw( nw )
         if check:
             n, f, s = check
             if verbose:
-                print( f'{snp}: {n} points with |S11| > 1, worst at {f} Hz: |{s}| = {abs(s)}' )
+                print( f'{snp}: {n} of {nw.f.size} points with |S| > 1, worst at {f} Hz: |{s}| = {abs(s)}' )
             else:
-                print( f'{snp}' )
+                print( snp )
         elif verbose:
             print( f'{snp}: ok' )
 
