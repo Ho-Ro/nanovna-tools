@@ -34,9 +34,8 @@ def get_tinysa_dBm( s_port, f_low=F_LOW, f_high=F_HIGH, points=POINTS, rbw=0, ve
             tinySA.read_all() # keep the serial buffer clean
             time.sleep( 0.1 )
 
-        span_k = ( f_high - f_low ) / 1e3
-        if 0 == rbw: # calculate from scan range and steps
-            rbw_k = span_k / points # RBW / kHz
+        if 0 == rbw: # use tinySA values
+            rbw_k = (f_high - f_low) * 7e-6 # RBW / kHz
         else:
             rbw_k = rbw / 1e3
 
@@ -50,11 +49,11 @@ def get_tinysa_dBm( s_port, f_low=F_LOW, f_high=F_HIGH, points=POINTS, rbw=0, ve
         tinySA.read_until( b'ch> ' ) # skip command echo and prompt
 
         # set timeout accordingly - can be very long - use a heuristic approach
-        timeout = int( span_k / ( rbw_k * rbw_k ) + points / 1e3 + 5)
-        tinySA.timeout = timeout
+        timeout = ((f_high - f_low) / 20e3) / (rbw_k ** 2) + points / 500 + 1
+        tinySA.timeout = timeout * 2
 
         if verbose:
-            sys.stderr.write( f'frequency step: {int( span_k / ( points-1 ) )} kHz\n' )
+            sys.stderr.write( f'frequency step: {int( (f_high - f_low) / ( points-1 ) / 1e3 )} kHz\n' )
             sys.stderr.write( f'RBW: {int(rbw_k)} kHz\n' )
             sys.stderr.write( f'serial timeout: {timeout} s\n' )
 

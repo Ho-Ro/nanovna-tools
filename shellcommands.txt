@@ -10,15 +10,15 @@ NanoVNA sends the prompt 'ch> ' and waits for next command
 
 (This protocol is also used by tinySA)
 
-Commands
-========
+NanoVNA Commands
+================
 
   bandwidth cal capture clearconfig color config data dump edelay freq frequencies
   help info marker measure pause power recall refresh release reset resume s21offset
   save saveconfig scan scan_bin smooth sweep tcxo threshold time touch touchcal touchtest
   trace transform usart usart_cfg vbat vbat_offset version
 
-Command syntax
+Command Syntax
 ==============
 
 - bandwidth {bw}
@@ -150,3 +150,73 @@ Command syntax
 
 - version
   Show FW version
+
+
+tinySA Commands
+===============
+
+version reset freq dac saveconfig clearconfig data frequencies scan scanraw zero sweep test
+touchcal touchtest pause resume repeat status caloutput save recall trace trigger marker line
+usart usart_cfg capture refresh touch release vbat vbat_offset help info color if actual_freq
+attenuate level sweeptime leveloffset levelchange modulation rbw mode spur load ext_gain output
+deviceid selftest correction calc threads
+
+Command Syntax
+==============
+
+version
+reset
+freq
+dac
+saveconfig
+clearconfig
+data
+frequencies
+scan
+scanraw
+zero
+sweep
+test
+touchcal
+touchtest
+pause
+resume
+repeat
+status
+caloutput
+save
+recall
+trace
+trigger
+marker
+line
+usart
+usart_cfg
+capture
+refresh
+touch
+release
+vbat
+vbat_offset
+help
+info
+color
+if
+actual_freq
+attenuate
+level
+sweeptime
+leveloffset
+levelchange
+modulation
+rbw
+mode
+spur
+load
+ext_gain
+output
+deviceid
+selftest
+correction
+calc
+threads
