@@ -112,7 +112,7 @@ with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial co
         echo = nano_tiny.read_until( b'resume' + crlf + prompt ) # wait for completion
 
 if len( captured_bytes ) != 2 * size:
-    if bytestream == b'capture?\r\nch> ': # error message
+    if captured_bytes == b'capture?\r\nch> ': # error message
         print( 'capture error - does the device support the "capture" cmd?' )
     else:
         print( 'capture error - wrong screen size?' )
