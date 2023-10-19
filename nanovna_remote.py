@@ -137,7 +137,7 @@ with serial.Serial( nano_tiny_device, timeout=0.5) as nano_tiny: # open serial c
         pil_image = Image.fromarray( rgba8888, 'RGBA' ) # create a PIL image
         image = np.array( pil_image ) # convert from PIL array to np array
         if zoom != 1:
-            image = cv2.resize( image, (zoom * width, zoom * height) ) # resize
+            image = cv2.resize( image, (zoom * width, zoom * height), interpolation = cv2.INTER_AREA ) # resize
         return image
 
 
