@@ -47,31 +47,43 @@ crlf = b'\r\n'
 prompt = b'ch> '
 
 
-# do the communication
-with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial connection
+def get_system_time():
+    now = datetime.now()
+    print( f'System time: {now.strftime( "%Y-%m-%d %H:%M:%S" )}' )
+    return now
 
-    nano_tiny.write( b'time' + cr )  # get date and time
-    echo = nano_tiny.read_until( b'time' + crlf ) # wait for start of cmd
+
+def show_device_time( nano_tiny ):
+    time_cmd = 'time'.encode()
+    nano_tiny.write( time_cmd + cr )  # get date and time
+    echo = nano_tiny.read_until( time_cmd + crlf ) # wait for start of cmd
     echo = nano_tiny.read_until( crlf ) # get 1st part of answer
-    print( f'NanoVNA time: {echo[:-2].decode().replace( "/", "-")}' )
+    print( f'Device time: {echo[:-2].decode().replace( "/", "-")}' )
     echo = nano_tiny.read_until( crlf ) # skip 2nd part (usage)
     echo = nano_tiny.read_until( prompt ) # wait for cmd completion
     if echo != prompt: # error
         print( 'timesync error - does the device support the "time" cmd?' )
         sys.exit()
+    return True
 
-    now = datetime.now()
-    print( f'System time:  {now.strftime( "%Y-%m-%d %H:%M:%S" )}' )
 
+def sync_device_time( nano_tiny, now ):
+    time_b_cmd = now.strftime( 'time b 0x%y%m%d 0x%H%M%S' ).encode()
+    nano_tiny.write( time_b_cmd + cr )  # set date and time
+    echo = nano_tiny.read_until( time_b_cmd + crlf ) # wait for start of cmd
+    echo = nano_tiny.read_until( prompt ) # wait for cmd completion
+
+    if echo != prompt: # error
+        print( 'timesync error - does the device support the "time b ..." cmd?' )
+        sys.exit()
+    return True
+
+
+# do the communication
+with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial connection
+
+    now = get_system_time()
     if options.sync:
-        time_cmd = now.strftime( 'time b 0x%y%m%d 0x%H%M%S' ).encode()
-        nano_tiny.write( time_cmd + cr )  # set date and time
-        echo = nano_tiny.read_until( time_cmd + crlf ) # wait for start of cmd
-        echo = nano_tiny.read_until( prompt ) # wait for cmd completion
-
-        if echo != prompt: # error
-            print( 'timesync error - does the device support the "time b ..." cmd?' )
-            sys.exit()
-        else:
-            print( 'Time sync ok' )
+        sync_device_time( nano_tiny, now )
+    show_device_time( nano_tiny )
 
