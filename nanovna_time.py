@@ -61,10 +61,10 @@ with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial co
         sys.exit()
 
     now = datetime.now()
-    print( f'System time:  {now.strftime( "%04Y-%02m-%02d %02H:%02M:%02S" )}' )
+    print( f'System time:  {now.strftime( "%Y-%m-%d %H:%M:%S" )}' )
 
     if options.sync:
-        time_cmd = now.strftime( 'time b 0x%02y%02m%02d 0x%02H%02M%02S' ).encode()
+        time_cmd = now.strftime( 'time b 0x%y%m%d 0x%H%M%S' ).encode()
         nano_tiny.write( time_cmd + cr )  # set date and time
         echo = nano_tiny.read_until( time_cmd + crlf ) # wait for start of cmd
         echo = nano_tiny.read_until( prompt ) # wait for cmd completion
