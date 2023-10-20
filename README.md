@@ -23,6 +23,25 @@ but can be overruled with the option `-d` if you have more than one device conne
 
 ## Communication and Measurement
 
+### nanovna_communication_template.py
+
+A very simple template to explore the NanoVNA serial communication and build own applications.
+When called without options it connects to the 1st detected NanoVNA or tinySA .
+The script sends the command `vbat` and displays the result.
+It does it step-by-step with commented commands to make own modifications.
+
+```
+usage: nanovna_communication_template.py [-h] [-d DEVICE] [-D] [-v]
+
+options:
+  -h, --help            show this help message and exit
+  -d DEVICE, --device DEVICE
+                        connect to device
+  -D, --detect          detect the NanoVNA device
+  -v, --verbose         be verbose about the communication
+
+```
+
 ### nanovna_command.py
 
 A simple gateway to the *NanoVNA* or *tinySA* shell commands for use in automatisation scripts, e.g.:
