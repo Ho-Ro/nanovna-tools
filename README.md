@@ -196,18 +196,20 @@ optional arguments:
 
 ### nanovna_time.py
 
-Show the RTC time of *NanoVNA-H* or *NanoVNA-H4* and sync it with the system time
+Show the RTC time of *NanoVNA-H* or *NanoVNA-H4* and sync it with the system time or calculate time deviation
 
 ```
-usage: nanovna_time.py [-h] [-d DEVICE] [-s]
+usage: nanovna_time.py [-h] [-d DEVICE] [-s] [-p]
 
 Show and sync the RTC time of NanoVNA-H or NanoVNA-H4
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to device
   -s, --sync            sync the NanoVNA time to the system time
+  -p, --ppm             calculate ppm deviation since last sync
+
 ```
 
 ### tinysa_scanraw.py
