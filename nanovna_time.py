@@ -127,7 +127,7 @@ with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial co
                     lastsync = lsync_file.readline()
                 lastsync = datetime.strptime( lastsync , '%Y-%m-%d %H:%M:%S' ) # datetime object
                 duration = int( 0.5 + ( now - lastsync ).total_seconds() )
-                print( f'Last sync:   {lastsync}, {int( 0.5 + duration)} s ago' )
+                print( f'Last sync:   {lastsync}, {duration} s ago' )
                 print( f'Deviation:   {int(0.5 + 1e6 * difference / duration)} ppm' )
             except FileNotFoundError:
                 print( 'Last sync date not known' )
