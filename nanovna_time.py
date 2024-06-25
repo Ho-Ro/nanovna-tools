@@ -110,6 +110,8 @@ def sync_device_time( nano_tiny, now ):
 
 # do the communication
 with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial connection
+    nano_tiny.write( cr )
+    echo = nano_tiny.read_until( crlf + prompt ) # remove spurious bytes
     if options.sync or options.ppm:
         lsync_name = get_config_name( 'nanovna_time', 'lastsync' )
     now = get_system_time()
@@ -126,8 +128,15 @@ with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial co
                 with open( lsync_name, 'r' ) as lsync_file:
                     lastsync = lsync_file.readline()
                 lastsync = datetime.strptime( lastsync , '%Y-%m-%d %H:%M:%S' ) # datetime object
-                duration = int( 0.5 + ( now - lastsync ).total_seconds() )
-                print( f'Last sync:   {lastsync}, {duration} s ago' )
-                print( f'Deviation:   {int(0.5 + 1e6 * difference / duration)} ppm' )
+                seconds = int( 0.5 + ( now - lastsync ).total_seconds() )
+                hours = int( 0.5 + seconds / 60 / 60 )
+                days = int( 0.5 + seconds / 60 / 60 / 24 )
+                if days >= 10:
+                    print( f'Last sync:   {lastsync}, {days} days ago' )
+                elif hours >= 6:
+                    print( f'Last sync:   {lastsync}, {hours} h ago' )
+                else:
+                    print( f'Last sync:   {lastsync}, {seconds} s ago' )
+                print( f'Deviation:   {int( 0.5 + 1e6 * difference / seconds )} ppm' )
             except FileNotFoundError:
                 print( 'Last sync date not known' )
