@@ -1,13 +1,37 @@
-#
-# create constant symlinks for NanoVNA and tinySA devices
-#
+# supporting udev rule for NanoVNA and tinySA devices
+# provide unique device symlinks, useful if you have more identical devices connected
 
-ACTION=="add", SUBSYSTEM=="tty", \
-  ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
-  ATTRS{manufacturer}=="nanovna.com", \
-  SYMLINK+="nanovna"
+# skip if no USB TTY device is ADDed
+ACTION!="add", GOTO="serial_end"
+SUBSYSTEM!="tty", GOTO="nano_tiny_end"
+KERNEL!="ttyUSB[0-9]*|ttyACM[0-9]*", GOTO="nano_tiny_end"
 
-ACTION=="add", SUBSYSTEM=="tty", \
-  ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", \
-  ATTRS{manufacturer}=="tinysa.org", \
-  SYMLINK+="tinysa"
+#
+#SUBSYSTEMS=="usb", IMPORT{builtin}="usb_id", IMPORT{builtin}="hwdb --subsystem=usb"
+SUBSYSTEMS=="usb", IMPORT{builtin}="usb_id"
+SUBSYSTEMS=="usb", IMPORT{builtin}="hwdb --subsystem=usb"
+
+# skip if not "STMicroelectronics" "Virtual COM Port"
+ENV{ID_VENDOR_ID}!="0483", GOTO="nano_tiny_end"
+ENV{ID_MODEL_ID}!="5740", GOTO="nano_tiny_end"
+
+# create a generic symlink for the device that was ADDED LAST!
+ENV{ID_VENDOR}=="nanovna.com", SYMLINK+="nanovna"
+ENV{ID_VENDOR}=="tinysa.org", SYMLINK+="tinysa"
+
+# now try to create unique symlinks
+# skip old "serial number" string "400"
+ENV{ID_SERIAL_SHORT}=="400", GOTO="nano_tiny_end"
+
+# skip empty serial number string
+ENV{ID_SERIAL_SHORT}=="", GOTO="nano_tiny_end"
+
+ENV{ID_VENDOR}=="nanovna.com", \
+  SYMLINK+="nanovna_$env{ID_SERIAL_SHORT}", \
+  GOTO="nano_tiny_end"
+
+ENV{ID_VENDOR}=="tinysa.org", \
+  SYMLINK+="tinysa_$env{ID_SERIAL_SHORT}", \
+  GOTO="nano_tiny_end"
+
+LABEL="nano_tiny_end"
