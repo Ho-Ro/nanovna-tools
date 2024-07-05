@@ -59,8 +59,8 @@ def get_tinysa_dBm( s_port, f_low=F_LOW, f_high=F_HIGH, points=POINTS, rbw=0, ve
 
         scan_command = f'scanraw {int(f_low)} {int(f_high)} {int(points)}\r'.encode()
         tinySA.write( scan_command )
-        tinySA.read_until( b'{' ) # skip command echoes
-        raw_data = tinySA.read_until( b'}ch> ' )
+        tinySA.read_until( b'{' ) # skip command echoes, TODO check if returned size > 0
+        raw_data = tinySA.read_until( b'}ch> ' ) # TODO repeat until complete
         tinySA.write( 'rbw auto\r'.encode() ) # switch to auto RBW for faster tinySA screen update
 
     raw_data = struct.unpack( '<' + 'xH'*points, raw_data[:-5] ) # ignore trailing '}ch> '

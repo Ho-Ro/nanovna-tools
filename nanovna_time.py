@@ -111,7 +111,7 @@ def sync_device_time( nano_tiny, now ):
 # do the communication
 with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial connection
     nano_tiny.write( cr )
-    echo = nano_tiny.read_until( crlf + prompt ) # remove spurious bytes
+    echo = nano_tiny.read_until( prompt ) # remove spurious bytes
     if options.sync or options.ppm:
         lsync_name = get_config_name( 'nanovna_time', 'lastsync' )
     now = get_system_time()
