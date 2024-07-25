@@ -46,12 +46,12 @@ typ.add_argument( '-t', '--tinysa', action = 'store_true',
     help = 'use with tinySA' )
 typ.add_argument( '--ultra', action = 'store_true',
     help = 'use with tinySA Ultra' )
-ap.add_argument( "-i", "--invert", action = 'store_true',
-    help="invert the colors, e.g. for printing" )
-ap.add_argument( "-o", "--out",
-    help="write the data into file OUT" )
-ap.add_argument( "-p", "--pause", action = 'store_true',
-    help="stop display refresh before capturing" )
+ap.add_argument( '-i', '--invert', action = 'store_true',
+    help='invert the colors, e.g. for printing' )
+ap.add_argument( '-o', '--out',
+    help='write the data into file OUT' )
+ap.add_argument( '-r', '--rle', action = 'store_true',
+    help='use RLE transfer, e.g. for slow serial connections' )
 
 options = ap.parse_args()
 outfile = options.out
@@ -100,23 +100,59 @@ prompt = b'ch> '
 
 # do the communication
 with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial connection
-    if options.pause:
-        nano_tiny.write( b'pause\r' )  # stop screen update
-        echo = nano_tiny.read_until( b'pause' + crlf + prompt ) # wait for completion
-    nano_tiny.write( b'capture\r' )  # request screen capture
-    echo = nano_tiny.read_until( b'capture' + crlf ) # wait for start of transfer
-    captured_bytes = nano_tiny.read( 2 * size )
-    echo = nano_tiny.read_until( prompt ) # wait for cmd completion
-    if options.pause:
+    nano_tiny.write( b'\rpause\r' )  # stop screen update
+    echo = nano_tiny.read_until( b'pause' + crlf + prompt ) # wait for completion
+    if options.rle:
+        nano_tiny.write( b'captur rle\rresume\r' )  # request screen capture, type ahead resume
+        echo = nano_tiny.read_until( b'capture rle' + crlf ) # wait for start of transfer
+        bytestream = nano_tiny.read_until(prompt + b'resume' + crlf + prompt) # wait for completion
+        if b'capture?\r\nch> ' in bytestream: # error message
+            print( 'capture error - does the device support the "capture" cmd?' )
+            sys.exit()
+        header,width, height,bpp,compression,psize=struct.unpack_from('<HHHBBH',bytestream,0)
+        sptr=0xa
+        size=width*height
+        palette=struct.unpack_from('<{:d}H'.format(psize),bytestream,sptr)
+        sptr=sptr+psize
+        bitmap=bytearray(size*2)
+        dptr=0
+        row=0
+        while(row<height):
+            #process RLE block
+            bsize=struct.unpack_from('<H',bytestream,sptr)[0]
+            sptr=sptr+2
+            nptr=sptr+bsize
+            while(sptr<nptr):
+                count=struct.unpack_from('<b',bytestream,sptr)[0]
+                sptr+=1
+                if(count<0):
+                    color=palette[bytestream[sptr]]
+                    sptr+=1
+                    while(count<=0):
+                        count=count+1
+                        struct.pack_into('<H',bitmap,dptr,color)
+                        dptr+=2
+                else:
+                    while(count>=0):
+                        count=count-1
+                        struct.pack_into('<H',bitmap,dptr,palette[bytestream[sptr]])
+                        dptr+=2
+                        sptr+=1
+            row+=1
+        captured_bytes=bitmap
+    else:
+        nano_tiny.write( b'capture\r' )  # request screen capture
+        echo = nano_tiny.read_until( b'capture' + crlf ) # wait for start of transfer
+        captured_bytes = nano_tiny.read( 2 * size )
+        echo = nano_tiny.read_until( prompt ) # wait for cmd completion
         nano_tiny.write( b'resume\r' )  # resume the screen update
         echo = nano_tiny.read_until( b'resume' + crlf + prompt ) # wait for completion
-
-if len( captured_bytes ) != 2 * size:
-    if captured_bytes == b'capture?\r\nch> ': # error message
-        print( 'capture error - does the device support the "capture" cmd?' )
-    else:
-        print( 'capture error - wrong screen size?' )
-    sys.exit()
+        if len( captured_bytes ) != 2 * size:
+            if captured_bytes == b'capture?\r\nch> ': # error message
+                print( 'capture error - does the device support the "capture" cmd?' )
+            else:
+                print( 'capture error - wrong screen size?' )
+            sys.exit()
 
 # convert captured_bytes to 1D word array
 rgb565 = struct.unpack( f'>{size}H', captured_bytes )
