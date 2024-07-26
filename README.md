@@ -53,37 +53,48 @@ A simple gateway to the *NanoVNA* or *tinySA* shell commands for use in automati
 
 The same function, coded in C.
 
-### nanovna_capture.py
+### nanotiny_capture.py
 
 Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png:
-- Connect via USB serial
+- Connect via USB serial or serial
+- Autodetect the device on USB
 - Issue the command 'pause' to freeze the screen
-- Issue the command 'capture'
-- Fetch 320x240 or 480x320 rgb565 pixels
+- Issue the command 'capture rle'
+- Checks for a valid RLE header
+- If yes, fetch and expand a compressed image
+- Else fetch 320x240 or 480x320 rgb565 pixels
 - Issue the command 'resume' to resume the screen update
 - Disconnect from USB serial
-- Convert pixels to rgba8888 values
+- Convert pixels to rgba8888 values and optionally scale
 - Finally store the image as png with date_time stamped name (e.g NanoVNA_20210617_153045.png)
 - You can provide an output file name (-o NAME.EXT) to store also as BMP, GIF, JPEG, PNG or TIFF.
 
 The program takes less than 1 second to complete.
 
 ```
-usage: nanovna_capture.py [-h] [-d DEVICE] [-n | --h4 | -t | --ultra] [-i] [-o OUT] [-p]
+usage: nanotiny_capture.py [-h] [-b BAUDRATE] [-d DEVICE] [-n | --h4 | -t | -u | -p] [-i] [-o OUT]
+                           [-s {1,2,3,4,5,6,7,8,9,10}] [-v]
 
-Capture a screen shot from NanoVNA or tinySA
+Capture a screenshot from NanoVNA-H, NanoVNA-H4, tinySA, tinySA Ultra or tinyPFA.
+Autodetect the device when connected to USB. Use RLE compression if available,
+especially useful e.g. for slow serial connections.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
+  -b BAUDRATE, --baudrate BAUDRATE
+                        set serial baudrate
   -d DEVICE, --device DEVICE
-                        connect to device
+                        connect to serial device
   -n, --nanovna         use with NanoVNA-H (default)
-  --h4                  use with NanoVNA-H4
+  --h4, --nanovna-h4    use with NanoVNA-H4
   -t, --tinysa          use with tinySA
-  --ultra               use with tinySA Ultra
+  -u, --ultra           use with tinySA Ultra
+  -p, --tinypfa         use with tinyPFA
   -i, --invert          invert the colors, e.g. for printing
   -o OUT, --out OUT     write the data into file OUT
-  -p, --pause           stop display refresh before capturing
+  -s {1,2,3,4,5,6,7,8,9,10}, --scale {1,2,3,4,5,6,7,8,9,10}
+                        scale image
+  -v, --verbose         verbose the communication progress
 ```
 
 ### nanovna_capture.c
