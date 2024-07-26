@@ -103,7 +103,7 @@ with serial.Serial( nano_tiny_device, timeout=1 ) as nano_tiny: # open serial co
     nano_tiny.write( b'\rpause\r' )  # stop screen update
     echo = nano_tiny.read_until( b'pause' + crlf + prompt ) # wait for completion
     if options.rle:
-        nano_tiny.write( b'captur rle\rresume\r' )  # request screen capture, type ahead resume
+        nano_tiny.write( b'capture rle\rresume\r' )  # request screen capture, type ahead resume
         echo = nano_tiny.read_until( b'capture rle' + crlf ) # wait for start of transfer
         bytestream = nano_tiny.read_until(prompt + b'resume' + crlf + prompt) # wait for completion
         if b'capture?\r\nch> ' in bytestream: # error message
