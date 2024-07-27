@@ -170,44 +170,45 @@ with serial.Serial( nano_tiny_device, baudrate=baudrate, timeout=1 ) as nano_tin
         sys.exit()
     magic, hd_width, hd_height, bpp, compression, psize=struct.unpack('<HHHBBH', bytestream)
     options.rle = magic == 0x4d42 and bpp == 8
+
     if options.verbose:
         if options.rle:
             print( f'  magic: {hex(magic)}, width: {hd_width}, height: {hd_height}, bpp: {bpp}, compression: {compression}, psize: {psize}' )
         else:
             print( f'  {bytestream}' )
+
     if options.rle:
         if options.verbose:
             print( 'use compressed RLE format' )
-        nano_tiny.timeout=stimeout/4
+        nano_tiny.timeout=stimeout/4 # TODO: can be reduced for incremental reading!
         if options.verbose:
             print('download timeout {0:0.1f} s'.format(stimeout))
-        bytestream += nano_tiny.read_until(prompt + b'resume' + crlf + prompt) # wait for completion
-        if options.verbose:
-            print( f'received {(len(bytestream) - 16)} image bytes:' )
-            print( f'  {bytestream[:10]} ... {bytestream[-20:-16]}' )
-            print( 'resume screen update' )
-            print( f'ready: {bytestream[-16:]}' )
 
         if hd_width != width or hd_height != height:
             print( f'capture error - wrong requested screen size {width} * {height}?' )
+            echo = nano_tiny.read_until(prompt + b'resume' + crlf + prompt) # wait for completion
             sys.exit()
 
         sptr=0xa
         size=hd_width*hd_height
-        palette=struct.unpack_from('<{:d}H'.format(psize),bytestream,sptr)
+        bytestream += nano_tiny.read( psize ) # read palette (psize = byte size)
+        palette=struct.unpack_from( '<{:d}H'.format(psize//2), bytestream, sptr ) # uint16!
         sptr=sptr+psize
         bitmap=bytearray(size*2)
         dptr=0
         row=0
         while(row<hd_height):
             #process RLE block
+            bytestream += nano_tiny.read( 2 ) # uint16
             bsize=struct.unpack_from('<H',bytestream,sptr)[0]
             sptr=sptr+2
             nptr=sptr+bsize
             while(sptr<nptr):
+                bytestream += nano_tiny.read( 1 ) # uint8
                 count=struct.unpack_from('<b',bytestream,sptr)[0]
                 sptr+=1
                 if(count<0):
+                    bytestream += nano_tiny.read( 1 ) # uint8
                     color=palette[bytestream[sptr]]
                     sptr+=1
                     while(count<=0):
@@ -215,16 +216,21 @@ with serial.Serial( nano_tiny_device, baudrate=baudrate, timeout=1 ) as nano_tin
                         struct.pack_into('<H',bitmap,dptr,color)
                         dptr+=2
                 else:
+                    bytestream += nano_tiny.read( count + 1 ) # uint8
                     while(count>=0):
                         count=count-1
                         struct.pack_into('<H',bitmap,dptr,palette[bytestream[sptr]])
                         dptr+=2
                         sptr+=1
             row+=1
-        bytestream=bitmap
-    else:
+        echo = nano_tiny.read_until(prompt + b'resume' + crlf + prompt) # wait for completion
         if options.verbose:
-            print( 'use standard RGB656 format' )
+            print( 'resume screen update' )
+            print( f'ready: {echo}' )
+        bytestream=bitmap
+    else: # RGB565 format
+        if options.verbose:
+            print( 'use standard RGB565 format' )
         nano_tiny.timeout=stimeout
         if options.verbose:
             print('download timeout {0:0.1f} s'.format(stimeout))
