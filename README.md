@@ -72,12 +72,12 @@ Fast command line tool that captures a screenshot from *NanoVNA* or *tinySA* and
 The program takes less than 1 second to complete.
 
 ```
-usage: nanotiny_capture.py [-h] [-b BAUDRATE] [-d DEVICE] [-n | --h4 | -t | -u | -p] [-i] [-o OUT]
+usage: nanotiny_capture.py [-h] [-b BAUDRATE] [-d DEVICE] [-n | --h4 | -t | -u | -p] [-i] [-o OUT] [-r]
                            [-s {1,2,3,4,5,6,7,8,9,10}] [-v]
 
 Capture a screenshot from NanoVNA-H, NanoVNA-H4, tinySA, tinySA Ultra or tinyPFA.
-Autodetect the device when connected to USB. Use RLE compression if available,
-especially useful e.g. for slow serial connections.
+Autodetect the device when connected to USB.
+Optional RLE compression if available, especially useful e.g. for slow serial connections.
 
 options:
   -h, --help            show this help message and exit
@@ -92,6 +92,7 @@ options:
   -p, --tinypfa         use with tinyPFA
   -i, --invert          invert the colors, e.g. for printing
   -o OUT, --out OUT     write the data into file OUT
+  -r, --rle             try rle compression, useful for slow serial connections
   -s {1,2,3,4,5,6,7,8,9,10}, --scale {1,2,3,4,5,6,7,8,9,10}
                         scale image
   -v, --verbose         verbose the communication progress
