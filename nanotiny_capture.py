@@ -177,6 +177,8 @@ with serial.Serial( nano_tiny_device, baudrate=baudrate, timeout=1 ) as nano_tin
     echo = nano_tiny.read_until( capture_cmd + crlf ) # wait for start of capture
 
     bytestream = nano_tiny.read( 10 ) # size of RLE header or possible error message
+    if options.verbose:
+        print( f'  {bytestream}' )
     if b'capture?' in bytestream: # error message, "capture" cmd not known
         bytestream += nano_tiny.read_until( crlf + prompt ) # wait for completion
         print( f'capture error ({bytestream}) - does the device support the "capture" cmd?' )
@@ -191,8 +193,6 @@ with serial.Serial( nano_tiny_device, baudrate=baudrate, timeout=1 ) as nano_tin
     if options.verbose:
         if options.rle:
             print( f'  magic: {hex(magic)}, width: {hd_width}, height: {hd_height}, bpp: {bpp}, compression: {compression}, psize: {psize}' )
-        else:
-            print( f'  {bytestream}' )
 
     if options.rle:
 
@@ -247,6 +247,10 @@ with serial.Serial( nano_tiny_device, baudrate=baudrate, timeout=1 ) as nano_tin
             row+=1
         echo = nano_tiny.read_until(prompt + b'resume' + crlf + prompt) # wait for completion
         if options.verbose:
+            bsize = len( bytestream )
+            isize = 2 * width * height
+            print( f'received {bsize} bytes ({int(100 * bsize / isize)} % of {isize} bytes image size)')
+            print( f'  {bytestream[:10]} ... {bytestream[-10:]}' )
             print( 'resume screen update' )
             print( f'ready: {echo}' )
         bytestream=bitmap

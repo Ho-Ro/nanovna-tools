@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 '''
-Command line tool to send a serial shell command to NanoVNA:
+Command line tool to send a serial shell command to NanoVNA or tinySA:
 Connect via USB serial, issue the command and get the response.
 Write the response (without the following prompt) to stdout or a file.
 NanoVNA serial commands:

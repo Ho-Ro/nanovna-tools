@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 '''
-Command line template to send a serial shell command to NanoVNA:
+Command line template to send a serial shell command to NanoVNA or tinySA:
 - Connect via USB serial
 - Encode the command string to bytearray
 - Send the command + CR
@@ -43,7 +43,7 @@ It does this step-by-step with commented commands to make own modifications easy
 ap.add_argument( '-d', '--device', dest = 'device',
     help = 'connect to device' )
 ap.add_argument( '-D', '--detect', dest = 'detect', default = False, action= 'store_true',
-    help = 'detect the NanoVNA device and exit' )
+    help = 'detect the NanoVNA or tinySA device and exit' )
 ap.add_argument( '-v', '--verbose', dest = 'verbose', default = False, action= 'store_true',
     help = 'be verbose about the communication' )
 

@@ -14,33 +14,28 @@ ADDR depends on the FW:
 DiSlord´s originalFW
 ====================
 SLOT    ADDR
-config  0x08018000
-0       0x08018800
-1       0x0801A000
-2       0x0801B800
-3       0x0801D000
-4       0x0801E800
+config  0x0801F800
+4       0x0801E000
+3       0x0801C800
+2       0x0801B000
+1       0x08019800
+0       0x08018000
 
 FW modified by Ho-Ro (https://github.com/Ho-Ro/NanoVNA-D/tree/NanoVNA-noSD)
 ===========================================================================
 SLOT    ADDR
 config  0x0801F800
-0       0x0801E000
-1       0x0801C800
-2       0x0801B000
+6       0x0801E000
+5       0x0801C800
+4       0x0801B000
 3       0x08019800
-4       0x08018000
-5       0x08016800
-6       0x08015000
-7       0x08013800
+2       0x08018000
+1       0x08016800
+0       0x08015000
 
 Reason:
 My FW modification omitted the SD functions, because my NanoVNA-H has no SD card slot.
-The increased free flash memory can be used to store 8 calibration slots instead of 5.
-I also reverted the locations of the data and put config on top of flash and the slots
-below in descending order. This has the advantage that with increased program size in
-future versions the highest slot(s) can be removed and config is untouched, while in
-original FW the config date and the low slot(s) will be overwritten 1st.
+The increased free flash memory can be used to store 7 calibration slots instead of 5.
 
 '''
 
@@ -121,29 +116,29 @@ slot_len = 3 * sector_len # = 0x1800
 empty = bytearray( slot_len ) # dummy slot
 cfg_len = sector_len # = 0x0800
 
-slots = [ [], [], [], [], [], [], [], [] ] # 8 calibration slots
+slots = [ [], [], [], [], [], [], [] ] # 7 calibration slots
 cfg = [] # the config slot
 
 size = os.path.getsize( infile.name )
 
-if ( size == 0x8000 ): # orig 5 slot format
+if size == 5 * slot_len + sector_len: # orig 5 slot format
     index = 0 # start with slot 0
     delta = 1 # bottom-up storage
-elif( size == 0xC800 ): # Ho-Ro 8 slot format
-    index = 7 # start with last slot
-    delta = -1 # top-down storage
+elif size == 7 * slot_len + sector_len: # Ho-Ro 7 slot format
+    index = 0 # start with slot 0
+    delta = 1 # top-down storage
 else:
-    print( f'wrong config file size, must be either {0x8000} (5 slots) or {0xC800} (8 slots)' )
+    print( f'wrong config file size, must be either {0x8000} (5 slots) or {0xB000} (7 slots)' )
     sys.exit()
 
 while( infile.tell() < size ): # parse and decode the infile
     s = infile.read( 4 )
     infile.seek( -4, 1 )
     magic, = struct.unpack( '<I', s )
-    if magic == 0x434f4e52: # 'CONR'
+    if magic == 0x434f4e54: # 'CONT'
         slots[ index ] = decode_slt( infile, prefix, index )
         index += delta
-    elif magic == 0x434f4e55: # 'CONU'
+    elif magic == 0x434f4e56: # 'CONV'
         cfg = decode_cfg( infile, prefix )
     else:
         infile.seek( sector_len, 1 ) # skip this sector
@@ -151,26 +146,26 @@ infile.close()
 
 if do_transfer: # transfer 5 slot format <-> 8 slot format
     root, ext = os.path.splitext( infile.name )
-    if size == 0x8000: # 5 -> 8
-        name = f'{root}_5_to_8{ext}'
-        print( f'create 8 slot config -> {name}' )
+    if size == 0x8000: # 5 -> 7
+        name = f'{root}_5_to_7{ext}'
+        print( f'create 7 slot config -> {name}' )
         with open( name, 'wb' ) as f:
-            for iii in range( 3 ): # 3 empty slots
-                f.write( empty )
-            for iii in range( 4, -1, -1 ): # 0..4 top down
+            for iii in range( 5 ): # 0..4
                 if len( slots[ iii ] ) == slot_len:
                     f.write( slots[ iii ] )
                 else:
                     f.write( empty )
+            for iii in range( 2 ): # 2 empty slots
+                f.write( empty )
             f.write( cfg ) # and finally the config area
     elif size == 0xC800: # 8 -> 5
-        name = f'{root}_8_to_5{ext}'
+        name = f'{root}_7_to_5{ext}'
         print( f'create 5 slot config -> {name}' )
         with open( name, 'wb' ) as f:
-            f.write( cfg ) # config area comes 1st
             for iii in range( 5 ): # followed by slot 0..4
                 if len( slots[ iii ] ) == slot_len:
                     f.write( slots[ iii ] )
                 else:
                     f.write( empty )
+            f.write( cfg ) # config area comes last
 

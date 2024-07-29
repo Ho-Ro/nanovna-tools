@@ -1,4 +1,4 @@
-TARGETS = nanovna_command nanovna_capture
+TARGETS = nanotiny_command nanotiny_capture
 
 .PHONY: all
 all: $(TARGETS)
@@ -18,10 +18,10 @@ CFLAGS = -Wall -Wextra
 #LDFLAGS = -lpng
 
 
-nanovna_command: nanovna_command.c
+nanotiny_command: nanotiny_command.c
 	gcc -o $@ $(CFLAGS) $^
 
-nanovna_capture: nanovna_capture.c
+nanotiny_capture: nanotiny_capture.c
 	gcc -o $@ $(CFLAGS) $^ -lpng
 
 

@@ -12,13 +12,14 @@ tinySA*.png
 *.ppm
 
 # binaries
-nanovna_capture
-nanovna_command
+nanotiny_capture
+nanotiny_command
 
 *.s1p
 *.s2p
 *.z1p
 *.csv
+*.bin
 
 scikit-rf/skrf
 

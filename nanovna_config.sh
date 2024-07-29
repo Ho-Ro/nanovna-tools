@@ -12,12 +12,12 @@
 #
 # set either "H4" or "H" for DiSlord's FW
 # https://github.com/DiSlord/NanoVNA-D
-# or "H_HORO" for Ho-Ro's noSD 8 slot FW modification
+# or "H_noSD" for Ho-Ro's noSD 7 slot FW modification
 # https://github.com/Ho-Ro/NanoVNA-D/tree/NanoVNA-noSD
 #
 #VARIANT="H4"
-VARIANT="H"
-#VARIANT="H_HORO"
+#VARIANT="H"
+VARIANT="H_noSD"
 #
 # the USB serial port of NanoVNA (default for Linux)
 SERIAL_DEVICE="/dev/ttyACM0"
@@ -33,7 +33,7 @@ FLASH=0x08000000
 # exit at undefined variables
 set -u
 # debug output
-# set -x
+#set -x
 
 # how are we called (i.e. shall we read or write)
 CMD_NAME="$(basename $0)"
@@ -43,13 +43,13 @@ else
     CMD="$1"
 fi
 
-# HACK for Ho-Ro 8 slot FW
-if [ "$CMD" = "SAVE8" ]; then
+# HACK for Ho-Ro 7 slot FW
+if [ "$CMD" = "SAVE_noSD" ]; then
     CMD=SAVE
-    VARIANT="H_HORO"
-elif [ "$CMD" = "RESTORE8" ]; then
+    VARIANT="H_noSD"
+elif [ "$CMD" = "RESTORE_noSD" ]; then
     CMD=RESTORE
-    VARIANT="H_HORO"
+    VARIANT="H_noSD"
 fi
 
 # setup filename, flash address and config size
@@ -59,32 +59,39 @@ if [ "$VARIANT" = "H4" ]; then
     FLASH_SIZE=0x40000
     CONF_SIZE=0x800
     PROP_SIZE=0x4000
-    SLOT0=0x0800
-    MAGIC=434f4e55
+    SLOT_0=0x0000
+    MAGIC0=434f4e54
+    MAGICC=434f4e56
 elif [ "$VARIANT" = "H" ]; then
     PROP_MAX=5
-    DEVICE="NanoVNA-H_${PROP_MAX}_slots"
+    DEVICE="NanoVNA-${VARIANT}_${PROP_MAX}_slots"
     FLASH_SIZE=0x20000
     CONF_SIZE=0x800
     PROP_SIZE=0x1800
-    SLOT0=0x0800
-    MAGIC=434f4e52
-elif [ "$VARIANT" = "H_HORO" ]; then
-    PROP_MAX=8
-    DEVICE="NanoVNA-H_${PROP_MAX}_slots"
+    SLOT_0=0x0000
+    MAGIC0=434f4e54
+    MAGICC=434f4e56
+elif [ "$VARIANT" = "H_noSD" ]; then
+    PROP_MAX=7
+    DEVICE="NanoVNA-${VARIANT}_${PROP_MAX}_slots"
     FLASH_SIZE=0x20000
     CONF_SIZE=0x800
     PROP_SIZE=0x1800
-    SLOT0=0xA800
-    MAGIC=434f4e52
+    SLOT_0=0x0000
+    MAGIC0=434f4e54
+    MAGICC=434f4e56
 else
-    echo VARIANT must be one of "H4", "H", or "H_HORO"
+    echo VARIANT must be one of "H", or "H_noSD"
     exit
 fi
+
 
 # calculate size and address of config
 CONFIG_SIZE=$(( $CONF_SIZE + $PROP_MAX * $PROP_SIZE ))
 CONFIG_START=$(( $FLASH + $FLASH_SIZE - $CONFIG_SIZE ))
+CONFIG=$(printf "0x%08X\n" $(($SLOT_0 + $PROP_MAX * $PROP_SIZE)))
+
+echo CONFIG: $CONFIG
 
 # format as hex for better human readability in debug etc.
 START=$( printf "0x%08X" $CONFIG_START )
@@ -106,13 +113,21 @@ if [ "$CMD" = "SAVE" ]; then # read config block from device
     EXECUTE="$DFU_UTIL --upload $NAME"
     echo $EXECUTE
     $EXECUTE
-    # is this the correct config content (start with magic "RNOC" or "UNOC")
+    # is this the correct config content (start with magic "TNOC" or "VNOC")
     # get hex string of 1st 4 bytes
-    XXXX=$(od --traditional -N4 -An -tx4 "$NAME" +$SLOT0 | tr A-F a-f | tr -d " ")
-    if [ $XXXX != $MAGIC ]; then
+    XXXX=$(od --traditional -N4 -An -tx4 "$NAME" +$SLOT_0 | tr A-F a-f | tr -d " ")
+    echo Slot 0 magic: $XXXX
+    if [ $XXXX != $MAGIC0 ]; then
         echo "\n$NAME: no correct config file"
         exit
     fi
+    XXXX=$(od --traditional -N4 -An -tx4 "$NAME" +$CONFIG | tr A-F a-f | tr -d " ")
+    echo Config magic: $XXXX
+    if [ $XXXX != $MAGICC ]; then
+        echo "\n$NAME: no correct config file"
+        exit
+    fi
+    echo Saved to $NAME
 elif [ "$CMD" = "RESTORE" ]; then
     if [ "$#" -lt 2 ]; then # no filename given, exit
         echo "usage: $CMD_NAME RESTORE <CONFIG_FILE>"
@@ -129,21 +144,23 @@ elif [ "$CMD" = "RESTORE" ]; then
         echo "$CMD_NAME: wrong config file size ${FILESIZE}, expected ${CONFIG_SIZE}"
         exit
     fi
-    # is this the correct config content (start with magic "RNOC" or "UNOC")
+    # is this the correct config content (start with magic "TNOC" or "VNOC")
     # get hex string of 1st 4 bytes
-    XXXX=$(od --traditional -N4 -An -tx4 "$2" +$SLOT0 | tr A-F a-f | tr -d " ")
-    if [ $XXXX != $MAGIC ]; then
-        echo "$CMD_NAME: no correct config file"
+    XXXX=$(od --traditional -N4 -An -tx4 "$2" +$SLOT_0 | tr A-F a-f | tr -d " ")
+    echo Slot 0 magic: $XXXX
+    if [ $XXXX != $MAGIC0 ]; then
+        echo "\n$NAME: no correct config file"
         exit
     fi
-    # if the device is in UART mode then switch to DFU mode
-    if [ -c "$SERIAL_DEVICE" ]; then
-        printf "\rreset dfu\r" > "$SERIAL_DEVICE"
-        sleep 2
+    XXXX=$(od --traditional -N4 -An -tx4 "$2" +$CONFIG | tr A-F a-f | tr -d " ")
+    echo Config magic: $XXXX
+    if [ $XXXX != $MAGICC ]; then
+        echo "\n$NAME: no correct config file"
+        exit
     fi
     EXECUTE="$DFU_UTIL --download $2"
-    #echo $EXECUTE
-    $EXECUTE
+    echo $EXECUTE
+    #$EXECUTE
 else
     echo usage:
     echo $CMD_NAME SAVE [CONFIG_FILE]

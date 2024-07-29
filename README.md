@@ -23,33 +23,33 @@ but can be overruled with the option `-d` if you have more than one device conne
 
 ## Communication and Measurement
 
-### nanovna_communication_template.py
+### nanotiny_communication_template.py
 
-A very simple template to explore the NanoVNA serial communication and build own applications.
-When called without options it connects to the 1st detected NanoVNA or tinySA .
+A very simple template to explore the NanoVNA or tinySA serial communication and build own applications.
+When called without options it connects to the 1st detected NanoVNA or tinySA.
 The script sends the command `vbat` and displays the result.
 It does it step-by-step with commented commands to make own modifications.
 
 ```
-usage: nanovna_communication_template.py [-h] [-d DEVICE] [-D] [-v]
+usage: nanotiny_communication_template.py [-h] [-d DEVICE] [-D] [-v]
 
 options:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to device
-  -D, --detect          detect the NanoVNA device
+  -D, --detect          detect the NanoVNA or tinySA device
   -v, --verbose         be verbose about the communication
 
 ```
 
-### nanovna_command.py
+### nanotiny_command.py
 
 A simple gateway to the *NanoVNA* or *tinySA* shell commands for use in automatisation scripts, e.g.:
 
-    ./nanovna_command.py help
+    ./nanotiny_command.py help
     Commands: scan scan_bin data frequencies freq sweep power bandwidth saveconfig clearconfig touchcal touchtest pause resume cal save recall trace marker edelay capture vbat tcxo reset smooth vbat_offset transform threshold help info version color
 
-### nanovna_command.c
+### nanotiny_command.c
 
 The same function, coded in C.
 
@@ -98,11 +98,11 @@ options:
   -v, --verbose         verbose the communication progress
 ```
 
-### nanovna_capture.c
+### nanotiny_capture.c
 
 An even faster command line tool that captures a screenshot from *NanoVNA* or *tinySA* and stores it as small png.
 It works similar to the python above and is a proof of concept how to communicate over USB serial in c.
-Usage: `nanovna_capture [NANOPORT] [NAME.EXT]` -> Stores screenshot as PNG unless EXT == "ppm".
+Usage: `nanotiny_capture [NANOPORT] [NAME.EXT]` -> Stores screenshot as PNG unless EXT == "ppm".
 Opens `/dev/ttyACM0` unless the 1st argument starts with `/dev/`.
 PNG format is provided by `libpng` and `libpng-dev`, NetPBM format needs no extra library support.
 
@@ -248,7 +248,7 @@ optional arguments:
 ```
 
 
-## Low Level Tools
+## Low Level Tools (be careful)
 
 ### nanovna_config.sh
 
@@ -258,8 +258,8 @@ This is stored on top of flash memory, address and size depend on device and FW 
 
 The script saves one complete configuration block from the device.
 On restore the size of the config file is checked against the flash config size.
-Also the *MAGIC* value at file start will be checked, either `RNOC` for calibration
-or `UNOC` for configuration - this is 'CONR' or 'CONU' reverse :)
+Also the *MAGIC* value at file start will be checked, either `TNOC` for calibration
+or `VNOC` for configuration - this is 'CONT' or 'CONV' reverse :)
 This check helps a little bit to avoid the usage of wrong data.
 
 ```
@@ -275,7 +275,7 @@ nanovna_config.sh RESTORE FILENAME
 
 Tool to process the config data block of a NanoVNA-H retrieved with `nanovna_config.sh`
 and save the data as individual files for each calibration slot and global config data
-or transfer the config file into the opposite format (5 slot format <-> 8 slot format).
+or transfer the config file into the opposite format (5 slot format <-> 7 slot format).
 
 ```
 usage: nanovna_config_split.py [-h] [-p PREFIX] [-s] [-t] infile
@@ -301,22 +301,17 @@ or [FW modified by Ho-Ro](https://github.com/Ho-Ro/NanoVNA-D/tree/NanoVNA-noSD)
 DiSlord´s originalFW        FW modified by Ho-Ro
 ====================        ====================
 SLOT    ADDR                SLOT    ADDR
-config  0x08018000          config  0x0801F800
-0       0x08018800          0       0x0801E000
-1       0x0801A000          1       0x0801C800
-2       0x0801B800          2       0x0801B000
-3       0x0801D000          3       0x08019800
-4       0x0801E800          4       0x08018000
-                            5       0x08016800
-                            6       0x08015000
-                            7       0x08013800
+                            0       0x08015000
+                            1       0x08016800
+0       0x08018000          2       0x08018000
+1       0x08019800          3       0x08019800
+2       0x0801B000          4       0x0801B000
+3       0x0801C800          5       0x0801C800
+4       0x0801E000          6       0x0801E000
+config  0x0801F800          config  0x0801F800
 ```
 
 #### Reason:
 In my FW modification, I omitted the SD functions because my NanoVNA-H HW V3.4 does not have an SD card slot.
-The increased free flash memory can be used to store 8 calibration slots instead of 5.
-I also reverted the locations of the data and put config on top of flash and the slots
-below in descending order. This has the advantage that with increased program size in
-future versions the highest slot(s) can be removed and the config data is untouched,
-while in original FW the config date and the low slot(s) will be overwritten 1st.
+The increased free flash memory can be used to store 7 calibration slots instead of 5.
 
