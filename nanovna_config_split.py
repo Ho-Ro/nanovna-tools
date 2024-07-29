@@ -103,13 +103,13 @@ ap.add_argument( '-p', '--prefix', default = 'NV-H',
 ap.add_argument( '-s', '--split', action='store_true',
     help='split config file into individual slot files' )
 ap.add_argument( '-t', '--transfer', action='store_true',
-    help='transfer 5 slot format <-> 8 slot format' )
+    help='transfer 5 slot format <-> 7 slot format' )
 
 options = ap.parse_args()
 infile = options.infile # read data from this file
 prefix = options.prefix # name prefix for individual slot files
 do_split = options.split # split into individual slot files
-do_transfer = options.transfer # 5 slot <-> 8 slot
+do_transfer = options.transfer # 5 slot <-> 7 slot
 
 sector_len = 0x800 # 2048 bytes
 slot_len = 3 * sector_len # = 0x1800
@@ -158,7 +158,7 @@ if do_transfer: # transfer 5 slot format <-> 8 slot format
             for iii in range( 2 ): # 2 empty slots
                 f.write( empty )
             f.write( cfg ) # and finally the config area
-    elif size == 0xC800: # 8 -> 5
+    elif size == 0xB000: # 7 -> 5
         name = f'{root}_7_to_5{ext}'
         print( f'create 5 slot config -> {name}' )
         with open( name, 'wb' ) as f:
