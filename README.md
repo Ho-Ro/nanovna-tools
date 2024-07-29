@@ -1,11 +1,10 @@
 # Toolbox for NanoVNA and tinySA
 
 Small ***NanoVNA*** and ***tinySA*** programs for scripting and automation,
-developed on Debian stable (bullseye), but any other Linux/Unix system should work.
+developed on Debian stable (bookworm), but any other Linux/Unix system should work.
 Windows and Mac are untested due to lack of HW.
 The Python tools can be used without installation on all systems where
-a Python interpreter is available,
-this is standard for Linux and Mac.
+a Python interpreter is available, this is standard for Linux and Mac.
 For Windows you have to install Python separately.
 Some Python tools also require the modules `cv2`, `matplotlib`, `numpy`, `PIL` and `scikit-rf`,
 which should normally already be present on your computer if you are involved
@@ -15,8 +14,8 @@ you can create a Debian package by typing `make deb`.
 For this you need to install python3-stdeb,
 the module for converting Python code and modules to a Debian package.
 This package contains also an udev rule that allows user access to the USB serial port of NanoVNA and tinySA.
-This rule also creates also a symlink, either `/dev/nanovna` or `/dev/tinysa`
-for recent FW versions that announce the device type.
+This rule creates also a symlink, either `/dev/nanovna` or `/dev/tinysa`
+for recent FW versions (since 2022) that announce the device type.
 
 The python commands will detect the serial port automatically,
 but can be overruled with the option `-d` if you have more than one device connected.
@@ -28,7 +27,7 @@ but can be overruled with the option `-d` if you have more than one device conne
 A very simple template to explore the NanoVNA or tinySA serial communication and build own applications.
 When called without options it connects to the 1st detected NanoVNA or tinySA.
 The script sends the command `vbat` and displays the result.
-It does it step-by-step with commented commands to make own modifications.
+It does it step-by-step with commented commands to make own modifications easy.
 
 ```
 usage: nanotiny_communication_template.py [-h] [-d DEVICE] [-D] [-v]
@@ -37,7 +36,7 @@ options:
   -h, --help            show this help message and exit
   -d DEVICE, --device DEVICE
                         connect to device
-  -D, --detect          detect the NanoVNA or tinySA device
+  -D, --detect          detect the NanoVNA or tinySA device and exit
   -v, --verbose         be verbose about the communication
 
 ```
@@ -275,7 +274,7 @@ nanovna_config.sh RESTORE FILENAME
 
 Tool to process the config data block of a NanoVNA-H retrieved with `nanovna_config.sh`
 and save the data as individual files for each calibration slot and global config data
-or transfer the config file into the opposite format (5 slot format <-> 7 slot format).
+or transfer the config file into the opposite format (5 slot format <-> 8 slot format).
 
 ```
 usage: nanovna_config_split.py [-h] [-p PREFIX] [-s] [-t] infile
@@ -301,17 +300,18 @@ or [FW modified by Ho-Ro](https://github.com/Ho-Ro/NanoVNA-D/tree/NanoVNA-noSD)
 DiSlord´s originalFW        FW modified by Ho-Ro
 ====================        ====================
 SLOT    ADDR                SLOT    ADDR
-                            0       0x08015000
-                            1       0x08016800
-0       0x08018000          2       0x08018000
-1       0x08019800          3       0x08019800
-2       0x0801B000          4       0x0801B000
-3       0x0801C800          5       0x0801C800
-4       0x0801E000          6       0x0801E000
+                            0       0x08013800
+                            1       0x08015000
+                            2       0x08016800
+0       0x08018000          3       0x08018000
+1       0x08019800          4       0x08019800
+2       0x0801B000          5       0x0801B000
+3       0x0801C800          6       0x0801C800
+4       0x0801E000          7       0x0801E000
 config  0x0801F800          config  0x0801F800
 ```
 
 #### Reason:
 In my FW modification, I omitted the SD functions because my NanoVNA-H HW V3.4 does not have an SD card slot.
-The increased free flash memory can be used to store 7 calibration slots instead of 5.
+The increased free flash memory can be used to store 8 calibration slots instead of 5.
 

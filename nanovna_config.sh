@@ -12,7 +12,7 @@
 #
 # set either "H4" or "H" for DiSlord's FW
 # https://github.com/DiSlord/NanoVNA-D
-# or "H_noSD" for Ho-Ro's noSD 7 slot FW modification
+# or "H_noSD" for Ho-Ro's noSD 8 slot FW modification
 # https://github.com/Ho-Ro/NanoVNA-D/tree/NanoVNA-noSD
 #
 #VARIANT="H4"
@@ -43,7 +43,7 @@ else
     CMD="$1"
 fi
 
-# HACK for Ho-Ro 7 slot FW
+# HACK for Ho-Ro 8 slot FW
 if [ "$CMD" = "SAVE_noSD" ]; then
     CMD=SAVE
     VARIANT="H_noSD"
@@ -72,7 +72,7 @@ elif [ "$VARIANT" = "H" ]; then
     MAGIC0=434f4e54
     MAGICC=434f4e56
 elif [ "$VARIANT" = "H_noSD" ]; then
-    PROP_MAX=7
+    PROP_MAX=8
     DEVICE="NanoVNA-${VARIANT}_${PROP_MAX}_slots"
     FLASH_SIZE=0x20000
     CONF_SIZE=0x800
@@ -91,7 +91,8 @@ CONFIG_SIZE=$(( $CONF_SIZE + $PROP_MAX * $PROP_SIZE ))
 CONFIG_START=$(( $FLASH + $FLASH_SIZE - $CONFIG_SIZE ))
 CONFIG=$(printf "0x%08X\n" $(($SLOT_0 + $PROP_MAX * $PROP_SIZE)))
 
-echo CONFIG: $CONFIG
+#echo CONFIG: $CONFIG
+#echo CONFIG_SIZE: $CONFIG_SIZE
 
 # format as hex for better human readability in debug etc.
 START=$( printf "0x%08X" $CONFIG_START )
@@ -160,7 +161,7 @@ elif [ "$CMD" = "RESTORE" ]; then
     fi
     EXECUTE="$DFU_UTIL --download $2"
     echo $EXECUTE
-    #$EXECUTE
+    $EXECUTE
 else
     echo usage:
     echo $CMD_NAME SAVE [CONFIG_FILE]
