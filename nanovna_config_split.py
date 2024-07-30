@@ -57,6 +57,9 @@ import os
 #
 ########################################################
 
+max_slot_orig = 5
+
+max_slot_noSD = 8
 
 def decode_slt( config, typ, slot ):
 # decode a prop config slot (see properties_t in nanovna.h)
@@ -76,13 +79,33 @@ def decode_slt( config, typ, slot ):
     return slt
 
 
+# typedef struct config {
+#   uint32_t magic;
+#   uint32_t _harmonic_freq_threshold;
+#   int32_t  _IF_freq;
+#   int16_t  _touch_cal[4];
+#   uint16_t _vna_mode;
+#   uint16_t _dac_value;
+#   uint16_t _vbat_offset;
+#   uint16_t _bandwidth;
+#   uint8_t  _lever_mode;
+#   uint8_t  _brightness;
+#   uint16_t _lcd_palette[MAX_PALETTE=32];
+#   uint32_t _serial_speed;
+#   uint32_t _xtal_freq;
+#   float    _measure_r;
+#   uint8_t  _band_mode;
+#   uint8_t  _reserved[3];
+#   uint32_t checksum;
+# } config_t;
+
 def decode_cfg( config, typ ):
     # decode the config storage (see config_t in nanovna.h)
     # write config data into file (if option -s), return the config data
     cfg = b''
-    # cfg += config.read( 100 ) # decode some config values
-    # harmonic_f, if_f, vbat_offset, bandwidth, ser_speed, xtal_f  = struct.unpack( '<4xII12xHH64xII', cfg )
-    # print( 'C', harmonic_f, if_f, vbat_offset, bandwidth, ser_speed, xtal_f )
+    # cfg += config.read( 104 ) # decode some config values
+    # magic, harmonic_f, IF, vbat_offset, bw, serial_speed, xtal_freq  \
+    #     = struct.unpack( '<III8x2x2xHH4x64xII', cfg )
     cfg += config.read( cfg_len - len( cfg ) ) # read remaining cfg data
     name = f'{typ}_config.bin'
     print( 'device configuration', end='' )
@@ -92,6 +115,8 @@ def decode_cfg( config, typ ):
             f.write( cfg )
     else:
         print()
+    # print( f'CFG: harmonic f: {harmonic_f} Hz, IF: {IF} Hz, vbat_offset: {vbat_offset} mV, '
+    #        f'bandwidth: {4000//(bw+1)} Hz, serial_speed: {serial_speed} bps, xtal_freq: {xtal_freq} Hz' )
     return cfg
 
 
@@ -104,75 +129,83 @@ ap.add_argument( '-p', '--prefix', default = 'NV-H',
 ap.add_argument( '-s', '--split', action='store_true',
     help='split config file into individual slot files' )
 ap.add_argument( '-t', '--transfer', action='store_true',
-    help='transfer 5 slot format <-> 8 slot format' )
+    help=f'transfer {max_slot_orig} slot format <-> {max_slot_noSD} slot format' )
 
 options = ap.parse_args()
 infile = options.infile # read data from this file
 prefix = options.prefix # name prefix for individual slot files
 do_split = options.split # split into individual slot files
-do_transfer = options.transfer # 5 slot <-> 8 slot
+do_transfer = options.transfer # orig slot num <-> noSD slot num
 
 sector_len = 0x800 # 2048 bytes
 slot_len = 3 * sector_len # = 0x1800
-empty = bytearray( slot_len ) # dummy slot
 cfg_len = sector_len # = 0x0800
+empty_slot = bytearray( slot_len ) # dummy slot
+empty_cfg = bytearray( cfg_len ) # dummy cfg
 
 slots = [ [], [], [], [], [], [], [], [] ] # 8 calibration slots
 cfg = [] # the config slot
 
 size = os.path.getsize( infile.name )
 
-if size == 5 * slot_len + sector_len: # orig 5 slot format
+file_size_orig = max_slot_orig * slot_len + sector_len
+file_size_noSD = max_slot_noSD * slot_len + sector_len
+
+if size == file_size_orig: # orig 5 slot format
     index = 0 # start with slot 0
     delta = 1 # bottom-up storage
-elif size == 8 * slot_len + sector_len: # noSD 8 slot format
+elif size == file_size_noSD: # noSD 8 slot format
     index = 0 # start with slot 0
     delta = 1 # top-down storage
 else:
-    print( f'wrong config file size, must be either {0x8000} (5 slots) or {0xC800} (8 slots)' )
+    print( f'wrong config file size, must be either {file_size_orig} ({max_slot_orig} slots) '
+           f'or {file_size_noSD} ({max_slot_noSD} slots)' )
     sys.exit()
-write_empty = True
+
 while( infile.tell() < size ): # parse and decode the infile
     s = infile.read( 4 )
     infile.seek( -4, 1 )
     magic, = struct.unpack( '<I', s )
-    if magic == 0x434f4e54: # 'CONT'
+    if magic == 0x434F4E54: # 'CONT'
         slots[ index ] = decode_slt( infile, prefix, index )
         index += delta
-    elif magic == 0x434f4e56: # 'CONV'
+    elif magic == 0x434F4E56: # 'CONV'
         cfg = decode_cfg( infile, prefix )
     else:
-        if write_empty:
-            with open( 'empty_config.bin', 'wb' ) as f:
-                f.write( b'\xff'*0x800 )
-            with open( 'empty_slot.bin', 'wb' ) as f:
-                f.write( b'\xff'*0x1800 )
-            write_empty = False
         infile.seek( sector_len, 1 ) # skip this sector
 infile.close()
 
+with open( 'empty_config.bin', 'wb' ) as f:
+    f.write( empty_cfg )
+with open( 'empty_1_slot.bin', 'wb' ) as f:
+    f.write( empty_slot )
+with open( 'empty_2_slots.bin', 'wb' ) as f:
+    f.write( empty_slot * 2 )
+with open( 'empty_4_slots.bin', 'wb' ) as f:
+    f.write( empty_slot * 4 )
+
 if do_transfer: # transfer 5 slot format <-> 8 slot format
     root, ext = os.path.splitext( infile.name )
-    if size == 0x8000: # 5 -> 8
-        name = f'{root}_5_to_8{ext}'
-        print( f'create 8 slot config -> {name}' )
+    if size == file_size_orig: # 5 -> 8
+        name = f'{root}_{max_slot_orig}_to_{max_slot_noSD}{ext}'
+        print( f'create {max_slot_noSD} slot config -> {name}' )
         with open( name, 'wb' ) as f:
-            for iii in range( 5 ): # 0..4
+            for iii in range( max_slot_orig ): # 0..4
                 if len( slots[ iii ] ) == slot_len:
                     f.write( slots[ iii ] )
                 else:
-                    f.write( empty )
-            for iii in range( 3 ): # 3 empty slots
-                f.write( empty )
+                    f.write( empty_slot )
+            for iii in range( max_slot_noSD - max_slot_orig ): # 3 empty slots
+                f.write( empty_slot )
             f.write( cfg ) # and finally the config area
-    elif size == 0xC800: # 8 -> 5
-        name = f'{root}_8_to_5{ext}'
-        print( f'create 5 slot config -> {name}' )
+    elif size == file_size_noSD: # 8 -> 5
+        name = f'{root}_{max_slot_noSD}_to_{max_slot_orig}{ext}'
+        print( f'create {max_slot_orig} slot config -> {name}' )
         with open( name, 'wb' ) as f:
-            for iii in range( 5 ): # start with slot 0..4
+            for iii in range( max_slot_orig ): # start with slot 0..4
                 if len( slots[ iii ] ) == slot_len:
                     f.write( slots[ iii ] )
                 else:
-                    f.write( empty )
+                    f.write( empty_slot )
             f.write( cfg ) # config area comes last
 
