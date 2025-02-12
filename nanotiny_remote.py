@@ -1,3 +1,7 @@
+
+
+
+
 #!/usr/bin/python
 
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -98,14 +102,23 @@ crlf = b'\r\n'
 prompt = b'ch> '
 
 # do the communication
-with serial.Serial( nano_tiny_device, timeout=0.5) as nano_tiny: # open serial connection
+with serial.Serial( nano_tiny_device, timeout=0.8) as nano_tiny: # open serial connection
 
     def do_region( what ):
         where = nano_tiny.read( 8 )
         x, y, w, h = struct.unpack( '<HHHH', where )
         if x >= width or y >= height or x+w > width or y+h > height: # dimension too big
             print( 'dimension error:', x, y, x+w, y+h )
-            return
+            ###################################
+            # on screen keyboard TinySA ULTRA
+            #  dimension error: 64 292 479 324
+            # Solution ?
+            if y+h> 324:
+                y=y-2
+                h=h-2
+            ###################################
+            else:
+                return
         if what == b'bulk':
             #print( f'bulk, x: {x}, y: {y}, w: {w}, h: {h}' )
             size = w * h
@@ -197,7 +210,9 @@ with serial.Serial( nano_tiny_device, timeout=0.5) as nano_tiny: # open serial c
     FORCE = 10
 
     refresh_image = FORCE
-    while refresh_image:  # run forever, stop with ^C on commad line or ESC on image
+
+    print("Stop with ^C on command line or press ESC on image:\tZoom: press +/- on image:\tImage to file: press 's' on image")
+    while refresh_image:  # run forever, stop with ^C on command line or ESC on image
         try:
             next_action = nano_tiny.read_until( b'\r\n')
             if b'bulk' in next_action:

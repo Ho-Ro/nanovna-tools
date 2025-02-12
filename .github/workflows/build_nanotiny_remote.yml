@@ -1,0 +1,49 @@
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10jobs:
+jobs:  
+  build:
+    runs-on: windows-latest
+
+    steps:
+
+      # Check-out repository
+      - uses: actions/checkout@v4
+
+      # Setup Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.4' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+
+      # Install dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Build python script into a single execute or app folder (macOS)
+      - uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: nanotiny_remote.py
+          mode: app
+
+      # Uploads artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: build/nanotiny_remote.exe
+          include-hidden-files: true
+
+      - name: Create zip file
+        run: |
+          powershell Compress-Archive -Path build\nanotiny_remote.exe -DestinationPath build\nanotiny_remote.zip
+
+      - name: Upload zip to release
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        with:
+          files: build/nanotiny_remote.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
