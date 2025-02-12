@@ -6,7 +6,7 @@ Windows and Mac are untested due to lack of HW.
 The Python tools can be used without installation on all systems where
 a Python interpreter is available, this is standard for Linux and Mac.
 For Windows you have to install Python separately.
-Some Python tools also require the modules `cv2`, `matplotlib`, `numpy`, `PIL` and `scikit-rf`,
+Some Python tools also require the modules `pyserial`, `opencv-python`, `matplotlib`, `numpy`, `PIPillow` and `scikit-rf`,
 which should normally already be present on your computer if you are involved
 in processing and visualising RF and microwave data with Python.
 If you are working under Linux and want to install the tool in your path,
